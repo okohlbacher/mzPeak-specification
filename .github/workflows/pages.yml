@@ -8,13 +8,15 @@ name: Pages
 jobs:
     build:
         runs-on: ubuntu-latest
-        container: pandoc/core:3.8
         steps:
             - uses: actions/checkout@v4
-            - name: Setup just
-              uses: extractions/setup-just@v4
+            - uses: docker://pandoc:3.8
+              with:
+                args: >-
+                    --from markdown+smart --to=html5 --css=static/css/styling.css -s
+                    index.md
+                    -o index.html
             - run: |-
-                just build
                 mkdir -p dist/
                 mv index.html dist/
             - run: |-
