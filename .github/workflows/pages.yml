@@ -10,12 +10,12 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - uses: wranders/markdown-to-pages-action@v1
-              with:
-                  token: ${{ secrets.GITHUB_TOKEN }}
-                  files: |-
-                      index.md
-                  custom_css: static/css/styling.css
+            - name: Setup just
+              uses: extractions/setup-just@v4
+            - run: |-
+                just build
+                mkdir -p dist/
+                mv index.html dist/
             - run: |-
                 cp -r ./static ./dist/static/
             - uses: actions/upload-pages-artifact@v3
