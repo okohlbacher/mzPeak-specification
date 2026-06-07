@@ -8,6 +8,7 @@ name: Pages
 jobs:
     build:
         runs-on: ubuntu-latest
+        container: pandoc/core:3.8
         steps:
             - uses: actions/checkout@v4
             - name: Setup just
