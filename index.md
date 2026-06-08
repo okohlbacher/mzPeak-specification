@@ -1,10 +1,28 @@
 # mzPeak File Format
 
+**PSI Recommendation**
+
+**PSI Mass Spectrometry and Proteomics Informatics Working Groups**
+**Status: DRAFT**
+
+----------------------
+
+**Status of this document**
+
+This document provides information to the proteomics community about a TODO. Distribution is unlimited. This document will be ratified via the HUPO Proteomics Standards Initiative (PSI) Document Process. Any alterations of this document MUST also follow the HUPO PSI Document Process.
+
+Version Draft 5 of version 0.9
+
+
 - [mzPeak File Format](#mzpeak-file-format)
+- [Abstract](#abstract)
 - [Introduction](#introduction)
+  - [Description of the need](#description-of-the-need)
+  - [Issues to be addressed](#issues-to-be-addressed)
+  - [Notational conventions](#notational-conventions)
+    - [Code samples](#code-samples)
   - [Overview](#overview)
     - [What _is_ mzPeak?](#what-is-mzpeak)
-    - [A brief note about code snippets found in this document.](#a-brief-note-about-code-snippets-found-in-this-document)
   - [Anatomy of a Parquet file](#anatomy-of-a-parquet-file)
     - [The schema](#the-schema)
     - [The metadata key-value pairs](#the-metadata-key-value-pairs)
@@ -60,8 +78,27 @@
 - [Chromatogram Metadata - `chromatograms_metadata.parquet`](#chromatogram-metadata---chromatograms_metadataparquet)
 - [Wavelength Spectrum Signal Data - wavelength\_spectra\_data.parquet](#wavelength-spectrum-signal-data---wavelength_spectra_dataparquet)
 - [Wavelength Spectrum Metadata - `wavelength_spectra_metadata.parquet`](#wavelength-spectrum-metadata---wavelength_spectra_metadataparquet)
+- [Authors Information](#authors-information)
+- [Contributors](#contributors)
+- [Intellectual Property Statement](#intellectual-property-statement)
+- [Copyright Notice](#copyright-notice)
+- [Glossary](#glossary)
+- [References](#references)
+
+# Abstract
 
 # Introduction
+
+## Description of the need
+
+## Issues to be addressed
+
+## Notational conventions
+The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL” are to be interpreted as described in RFC 2119 (2).
+
+### Code samples
+
+This document describes both a file format and a set of suggested algorithms for preparing data to be stored in that format. The original author (Joshua Klein), includes snippets of Python code to do these operations under the assumption that at this time most technical programmers will know Python, that Python is effectively executable pseudocode, save that the code snippets use three components, abstract base classes from the standard library for type annotations, [NumPy](https://numpy.org/) v2.1 for certain array operations which are assumed to be understandable, and [PyArrow](https://arrow.apache.org/docs/python/index.html) v20.0 for operations on Apache Arrow arrays which are conceptually equivalent for in-memory representations of the data stored in Parquet files.
 
 ## Overview
 
@@ -82,10 +119,6 @@ Components of an mzPeak archive:
 - `chromatograms_data.parquet`: Chromatogram signal data. May be in point layout or chunked layout which have different size and random access characteristics. Intensity measures with different units may be stored in parallel.
 
 and other Parquet files may be added to cover additional modalities as needed like the wavelength spectra.
-
-### A brief note about code snippets found in this document.
-
-This document describes both a file format and a set of suggested algorithms for preparing data to be stored in that format. The original author (Joshua Klein), includes snippets of Python code to do these operations under the assumption that at this time most technical programmers will know Python, that Python is effectively executable pseudocode, save that the code snippets use three components, abstract base classes from the standard library for type annotations, [NumPy](https://numpy.org/) v2.1 for certain array operations which are assumed to be understandable, and [PyArrow](https://arrow.apache.org/docs/python/index.html) v20.0 for operations on Apache Arrow arrays which are conceptually equivalent for in-memory representations of the data stored in Parquet files.
 
 ## Anatomy of a Parquet file
 
@@ -1452,3 +1485,44 @@ This metadata is stored separately from the mass spectra, allowing the two diffe
   - `parameters` (list): A list of controlled or uncontrolled parameters that describe this scan. See [the parameter list section](#the-parameters-list) for more details.
   - `scan_windows`: See equivalent substructure for [spectra](#spectrum-metadata---spectra_metadataparquet)
   - MAY supply a *child* term of [MS:1000503](http://purl.obolibrary.org/obo/MS_1000503) (scan attribute) one or more times
+
+
+# Authors Information
+
+Joshua A. Klein
+Boston MA, USA
+joshua.adam.klein@gmail.com
+
+Tim Van Den Bossche,
+Ghent University, Ghent, Belgium; VIB-UGent Center for Medical Biotechnology, VIB, Ghent, Belgium
+Tim.VanDenBossche@ugent.be
+
+Samuel Wein
+Wissenschaftlicher Mitarbeiter, Institute for Bioinformatics and Medical Informatics, University of Tübingen
+samuel.wein@uni-tuebingen.de
+
+Oliver Kohlbacher
+Professor, Applied Bioinformatics, Dept. of Computer Science, University of Tübingen; Director, Institute for Bioinformatics and Medical Informatics, University of Tübingen; Director, Institute for Translational Bioinformatics, University Hospital Tübingen
+oliver.kohlbacher@uni-tuebingen.de
+
+TODO: Fill in with more people from the mailing list
+
+# Contributors
+
+TODO: Fill in with more people from the mailing list
+
+# Intellectual Property Statement
+
+The PSI takes no position regarding the validity or scope of any intellectual property or other rights that might be claimed to pertain to the implementation or use of the technology described in this document or the extent to which any license under such rights might or might not be available; neither does it represent that it has made any effort to identify any such rights. Copies of claims of rights made available for publication and any assurances of licenses to be made available, or the result of an attempt made to obtain a general license or permission for the use of such proprietary rights by implementers or users of this specification can be obtained from the PSI Chair.
+
+The PSI invites any interested party to bring to its attention any copyrights, patents or patent applications, or other proprietary rights which may cover technology that may be required to practice this recommendation. Please address the information to the PSI Chair (see contact information at PSI website).
+
+# Copyright Notice
+
+Copyright (C) 2026 by the Human Proteome Organization (HUPO) Proteomics Standards Initiative (PSI) under the CC-BY-ND 4.0 license (https://creativecommons.org/licenses/by-nd/4.0/).
+
+TODO: The mzPeak name is currently held in trust by the OpenMS Inc. The details of the trademark are described [here](https://doi.org/10.5281/zenodo.20054899)
+
+# Glossary
+
+# References
