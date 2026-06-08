@@ -10,7 +10,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
-            - uses: docker://pandoc:3.8
+            - uses: docker://pandoc/core:3.8
               with:
                 args: >-
                     --from markdown+smart --to=html5 --css=static/css/styling.css -s
