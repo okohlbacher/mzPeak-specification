@@ -40,7 +40,6 @@ Version Draft 5 of version 0.9
       - [Typing Parameter Values](#typing-parameter-values)
       - [Column Name Inflection](#column-name-inflection)
     - [Null Semantics for Metadata](#null-semantics-for-metadata)
-    - [File-Level Metadata](#file-level-metadata)
   - [Signal Data Layouts](#signal-data-layouts)
     - [Arrays and Columns](#arrays-and-columns)
     - [The Array Index](#the-array-index)
@@ -65,6 +64,7 @@ Version Draft 5 of version 0.9
     - [How to read a single entry from the chunked encoding](#how-to-read-a-single-entry-from-the-chunked-encoding)
   - [Why all these root nodes?](#why-all-these-root-nodes)
 - [Index File - `mzpeak_index.json`](#index-file---mzpeak_indexjson)
+  - [File-Level Metadata](#file-level-metadata)
   - [Data Kind](#data-kind)
     - [Adding a new `Data Kind`](#adding-a-new-data-kind)
   - [Entity Type](#entity-type)
@@ -336,10 +336,6 @@ A row value that is `null` should be treated as being absent, having no value. I
 A writer implementation is _SHOULD_ to minimize the number of interspersed rows that are `null`, but this is not strictly required. Minimizing the interspersed nulls improves compressability. See the images below, the "Packed Tables" has all of the rows of each parallel table contiguous, while the "Sparse Tables" diagram shows rows of nulls intermixed
 
 <img src="static/img/packed_tables.png" width="40%" style="background-color: white; padding: 1em;"/> <img src="static/img/sparse_tables.png" width="40%" style="background-color: white; padding: 1em;"/>
-
-### File-Level Metadata
-
-Some metadata is descriptive of the entire run and does not make sense to store in the rows of a table. This data is stored as JSON in the [Parquet key-value metadata](#the-metadata-key-value-pairs) of the `metadata` [data kind](#data-kind) files.
 
 ## Signal Data Layouts
 
@@ -1166,9 +1162,25 @@ TODO: Add wavelength files to examples
 }
 ```
 
-Governed by JSONSchema `schema/mzpeak_index.json`
+Governed by JSONSchema [`schema/mzpeak_index.json`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/mzpeak_index.json)
 
 The `data_kind` and `entity_kind` fields are loose enumerations. They are expected to grow over time.
+
+## File-Level Metadata
+
+The [file level metadata](#file-level-metadata) *SHOULD* be stored in `$mzpeak_index.metadata` and the metadata Parquet files' key-value pairs as JSON-encoded metadata governed by the associated schemas below:
+
+  - [`file_description`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/file_description.json)
+  - [`instrument_configuration_list`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/instrument_configuration.json)
+  - [`data_processing_method_list`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/data_processing.json)
+  - [`software_list`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/software.json)
+  - [`sample_list`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/sample.json)
+  - [`scan_settings_list`]() (TODO)
+  - [`run`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/ms_run.json)
+
+
+QUESTION: Anything we put in the `mzpeak_index.json` is necessarily shown in cleartext to all readers unless ZIP encryption is used, but ZIP encryption is well known to be flawed and inconsistent. Anything in a Parquet file's footer key-value pairs is encryptable. The index is JSON for convenience. We *could* use Parquet for that too, but it's overkill and harder for scripting languages to get at.
+
 
 ## Data Kind
 
@@ -1264,14 +1276,7 @@ The spectrum peak lists separately stored from the raw signal stored in [`spectr
 }
 ```
 
-The [file level metadata](#file-level-metadata) for this Parquet file should include the following JSON-encoded metadata:
-  - [`file_description`](https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/file_description.json)
-  - [`instrument_configuration_list`](https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/instrument_configuration.json)
-  - [`data_processing_method_list`](https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/data_processing.json)
-  - [`software_list`](https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/software.json)
-  - [`sample_list`](https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/sample.json)
-  - [`scan_settings_list`]() (TODO)
-  - [`run`](https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/ms_run.json)
+
 
 This metadata table uses the [packed parallel metadata table](#packed-parallel-metadata-tables) schema. The parallel schemas are shown below. The general order of columns in unspecified, but `spectrum.index`, `scan.source_index`, `precursor.source_index`, and `selected_ion.source_index` _MUST_ be the first column of their respective schemas. Wherever these lists say _MAY_, that value may either be stored as a column or as an entry in the [parameter list](#the-parameters-list) but a column tends to make more sense if it is usually present.
 
