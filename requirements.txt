@@ -1,0 +1,6 @@
+# Documentation site build dependencies for the mzPeak specification.
+# Install into an isolated environment, e.g. with uv:
+#   uv venv --python 3.12 .venv
+#   uv pip install --python .venv -r requirements.txt
+mkdocs-material>=9.5,<10
+pymdown-extensions>=10
