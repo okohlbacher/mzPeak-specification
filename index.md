@@ -89,11 +89,27 @@ Version Draft 5 of version 0.9
 
 # Abstract
 
+mzPeak is an open, columnar file format for mass spectrometry data. It stores one or more mass spectrometry runs as a collection of [Apache Parquet](https://parquet.apache.org/) files, bundled in an uncompressed [ZIP](<https://en.wikipedia.org/wiki/ZIP_(file_format)>) archive or an equivalent unpacked directory or object-store prefix, and described by a JSON index. Drawing on the data model and controlled-vocabulary conventions of mzML (1), mzPeak re-expresses them in a strongly typed, columnar layout that supports random and partial access, adaptive compression, and cloud-native object-store access, while preserving the full fidelity of spectra, chromatograms, and their metadata. The format is extensible by design: additional *data kinds* and *entity types* — for example peak lists, ion mobility, mass spectrometry imaging, and wavelength spectra — can be added without breaking readers that do not understand them. This document specifies the mzPeak container, its Parquet schemas, its metadata and signal-data layouts, and the conventions for representing controlled-vocabulary terms.
+
 # Introduction
 
 ## Description of the need
 
+Mass spectrometry produces ever-larger datasets, and the community standard exchange format, mzML (1), is increasingly strained by them. mzML encodes spectra as XML with Base64-encoded binary arrays. This representation is verbose, must be parsed largely linearly, and offers no native mechanism for random or partial access: reading a single spectrum, or a single dimension of a spectrum's data, generally requires scanning or separately indexing the whole document. The Base64-in-XML encoding also inflates file size and is poorly suited both to modern columnar compression and to cloud object stores, where range requests over a compact, self-describing binary layout are the norm.
+
+At the same time the analytical landscape has broadened — high-throughput LC-MS, ion mobility separations, mass spectrometry imaging, and multi-omics workflows — and downstream tooling increasingly expects to slice data along arbitrary axes (m/z, time, intensity, spatial coordinate) and to operate directly on remote storage. What is needed is a format that preserves the rich, controlled-vocabulary-annotated data model that mzML established, while storing the underlying signal in a compact, columnar, randomly addressable form.
+
 ## Issues to be addressed
+
+mzPeak is designed to meet the following requirements:
+
+- **Lossless fidelity.** Every spectrum, chromatogram, and item of metadata representable in mzML MUST be representable in mzPeak without loss, including both controlled-vocabulary and user-defined parameters.
+- **Compact storage.** Signal data SHOULD be stored in a columnar layout amenable to adaptive encoding and compression, yielding files substantially smaller than the equivalent mzML.
+- **Random and partial access.** A reader MUST be able to retrieve an individual entry, or a slice along one dimension, without decoding the entire file, by means of the Parquet page index.
+- **Cloud-native access.** The container and its layout MUST support efficient access from object stores via range requests, without an intervening whole-file decompression step.
+- **Controlled-vocabulary fidelity.** The format MUST continue to use PSI-MS and related controlled vocabularies so that metadata carry stable, machine-resolvable meaning.
+- **Extensibility.** The format MUST accommodate new [data kinds](#data-kind) and [entity types](#entity-type) — such as peak lists, ion mobility, imaging, and wavelength spectra — without breaking readers that do not understand them.
+- **Interoperability.** The format SHOULD be implementable across languages and platforms using widely available Parquet and Arrow libraries.
 
 ## Notational conventions
 The key words “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL” are to be interpreted as described in RFC 2119 (2).
@@ -1242,7 +1258,12 @@ Any value outside of these is assumed to be treated as `other`.
 
 ### Adding a new `Entity Type`
 
-TODO: Expand this
+As with [data kinds](#adding-a-new-data-kind), the set of entity types is expected to grow as new kinds of measurement are stored in mzPeak. To add a new entity type:
+
+1. Pick a name that will fit within the index JSON file. Prefer lower-case names. e.g. `feature` for an extracted LC-MS feature.
+2. Define what a single entity of this type *is* — the thing each entry describes — and the coordinate or coordinates along which it is measured. e.g. a `feature` is a region in retention-time × m/z (× ion mobility) space with an associated intensity.
+3. Describe which [data kinds](#data-kind) apply to the entity type, and its relationship to existing entity types. Prefer simple one-to-one or one-to-many relationships. e.g. a `feature` relates one-to-many to the `spectrum` entries it summarizes.
+4. A reader that does not recognize the entity type MUST treat its files as it would an `other` entity, ignoring them unless it understands the type.
 
 # Spectrum Signal Data File - `spectra_data.parquet`
 
