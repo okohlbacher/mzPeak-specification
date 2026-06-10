@@ -6,8 +6,11 @@ hide:
 ---
 
 <div class="mzp-hero" markdown>
+<img class="mzp-hero__logo" src="assets/img/mzpeak-logo.png" alt="mzPeak">
+
 <span class="mzp-hero__eyebrow">HUPO-PSI Recommendation · Working Draft</span>
-# mzPeak File Format
+
+# File Format Specification
 <p class="mzp-hero__tagline">
 An open, columnar, random-access file format for storing mass spectra,
 chromatograms, and rich instrument metadata — designed to succeed mzML for
