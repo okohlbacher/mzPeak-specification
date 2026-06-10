@@ -1,18 +1,66 @@
 /* ============================================================================
-   mzPeak specification — Material theme customisations
+   mzPeak specification — brand theme (from the mzPeak / OpenMS design handoff)
+   Identity: "a modern scientific instrument" — light, hairline-bordered chrome,
+   one electric-blue accent (#3157e9, sampled from the logo mark), with the
+   OpenMS spectrum (orange→blue) as a 2px flourish only (never data).
+   IBM Plex Sans for text, IBM Plex Mono for every measured value (set in
+   mkdocs.yml theme.font). The header stays white via palette primary:white,
+   so the blue logo mark has strong contrast.
    ========================================================================== */
 
 :root {
-  --md-primary-fg-color:        #3b4bbf;
-  --md-primary-fg-color--light: #5566d6;
-  --md-primary-fg-color--dark:  #2b3690;
-  --md-accent-fg-color:         #6d4bd6;
+  /* Brand blue ramp (sampled from the mzPeak mark) */
+  --mzp-blue-50:  #f0f3ff;
+  --mzp-blue-100: #e1e7fe;
+  --mzp-blue-300: #839af6;
+  --mzp-blue-500: #4163ec;
+  --mzp-blue-600: #3157e9;   /* primary accent */
+  --mzp-blue-700: #1e42d2;
+  --mzp-blue-800: #20399d;
+
+  /* OpenMS brand spectrum — secondary flourish only */
+  --mzp-openms: linear-gradient(
+    90deg, #ff9101 0%, #ff6f12 12%, #ff4a48 26%, #ff2f74 37%, #ff15ab 49%,
+    #f804ce 57%, #d203e6 65%, #a814f3 74%, #762bf5 84%, #4848ed 93%, #3355ea 100%);
+
+  --md-accent-fg-color: var(--mzp-blue-700);
 }
 
+/* Brand-blue links & interactive accents (header chrome stays white) */
+[data-md-color-scheme="default"] {
+  --md-typeset-a-color: var(--mzp-blue-600);
+  --md-accent-fg-color: var(--mzp-blue-700);
+}
+/* Dark scheme: lift the blue so links stay legible on slate */
 [data-md-color-scheme="slate"] {
-  --md-hue: 232;
-  --md-primary-fg-color:        #8b9bff;
-  --md-accent-fg-color:         #b69bff;
+  --md-hue: 222;
+  --md-typeset-a-color: var(--mzp-blue-300);
+  --md-accent-fg-color: var(--mzp-blue-300);
+}
+
+/* ----------------------------------------------------------------------------
+   Chrome — hairline borders + the OpenMS spectrum strip under the nav
+   -------------------------------------------------------------------------- */
+.md-header {
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+/* The 2px spectrum flourish sits beneath the tab bar on desktop … */
+.md-tabs {
+  border-bottom: 2px solid transparent;
+  border-image: var(--mzp-openms) 1;
+}
+/* … and beneath the header itself on narrow screens where tabs are hidden. */
+@media screen and (max-width: 76.1875em) {
+  .md-header {
+    border-bottom: 2px solid transparent;
+    border-image: var(--mzp-openms) 1;
+  }
+}
+
+/* Logo mark a touch larger for presence in the light header */
+.md-header__button.md-logo img {
+  height: 1.5rem;
+  width: auto;
 }
 
 /* Slightly tighter, more technical reading measure */
@@ -26,27 +74,45 @@
 .mzp-hero {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
-  padding: 2.4rem 0 1.2rem;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 2.2rem 0 1.4rem;
   border-bottom: 1px solid var(--md-default-fg-color--lightest);
   margin-bottom: 1.6rem;
+}
+/* md_in_html wraps the bare <img>/<span> hero lines in <p>; let flex gap own
+   the spacing instead of paragraph margins. */
+.mzp-hero > p {
+  margin: 0;
+}
+.mzp-hero__logo {
+  height: auto;
+  width: clamp(13rem, 34vw, 19rem);
+  margin: 0;
+}
+[data-md-color-scheme="slate"] .mzp-hero__logo {
+  /* the wordmark's black keyline disappears on dark; a soft glow keeps it crisp */
+  filter: drop-shadow(0 0 0.4px rgba(255, 255, 255, 0.6));
 }
 .mzp-hero__eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-size: 0.66rem;
   font-weight: 700;
-  color: var(--md-accent-fg-color);
+  color: var(--mzp-blue-600);
+}
+[data-md-color-scheme="slate"] .mzp-hero__eyebrow {
+  color: var(--mzp-blue-300);
 }
 .mzp-hero h1 {
-  font-size: 2.6rem;
-  line-height: 1.1;
+  font-size: 2.1rem;
+  line-height: 1.08;
   margin: 0;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 .mzp-hero__tagline {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   color: var(--md-default-fg-color--light);
   max-width: 42rem;
 }
@@ -54,7 +120,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  margin-top: 0.4rem;
+  margin-top: 0.5rem;
 }
 .mzp-badge {
   display: inline-flex;
@@ -62,9 +128,10 @@
   gap: 0.3rem;
   font-size: 0.7rem;
   font-weight: 600;
-  padding: 0.2rem 0.6rem;
+  font-family: var(--md-code-font-family, monospace);
+  padding: 0.22rem 0.62rem;
   border-radius: 999px;
-  background: var(--md-primary-fg-color);
+  background: var(--mzp-blue-600);
   color: #fff;
 }
 .mzp-badge--ghost {

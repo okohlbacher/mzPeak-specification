@@ -22,8 +22,8 @@ theme:
   icon:
     repo: fontawesome/brands/github
   font:
-    text: Inter
-    code: JetBrains Mono
+    text: IBM Plex Sans
+    code: IBM Plex Mono
   palette:
     - media: "(prefers-color-scheme)"
       toggle:
@@ -31,15 +31,15 @@ theme:
         name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: deep purple
+      primary: white
+      accent: indigo
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: deep purple
+      primary: black
+      accent: indigo
       toggle:
         icon: material/brightness-4
         name: Switch to system preference
