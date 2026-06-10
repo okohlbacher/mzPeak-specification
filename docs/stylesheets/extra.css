@@ -90,9 +90,12 @@
   width: clamp(13rem, 34vw, 19rem);
   margin: 0;
 }
+/* Dark mode: lift the logo blue toward the lighter end of the ramp so the
+   wordmark/mark stay legible on the dark header and page (replaces a weak
+   drop-shadow that did not meet contrast). */
+[data-md-color-scheme="slate"] .md-header__button.md-logo img,
 [data-md-color-scheme="slate"] .mzp-hero__logo {
-  /* the wordmark's black keyline disappears on dark; a soft glow keeps it crisp */
-  filter: drop-shadow(0 0 0.4px rgba(255, 255, 255, 0.6));
+  filter: brightness(1.4) saturate(1.05);
 }
 .mzp-hero__eyebrow {
   text-transform: uppercase;
@@ -166,11 +169,27 @@
   text-align: center;
 }
 
+/* Custom raw-HTML tables bypass Material's scroll wrapper; make them scroll
+   horizontally instead of overflowing the viewport on small screens. */
+.packed-table,
+.point-table,
+.chunk-table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
 /* Schematic figures sit on white regardless of theme so diagrams stay legible */
 .mzp-figure img {
   background: #ffffff;
   padding: 1em;
   border-radius: 0.4rem;
+}
+/* Tall portrait diagrams declare an explicit height attribute; Material forces
+   height:auto so they blow up to full width. Cap them and keep aspect ratio. */
+.mzp-figure img[height] {
+  max-height: 28rem;
+  width: auto;
 }
 
 /* ----------------------------------------------------------------------------

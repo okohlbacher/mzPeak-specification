@@ -10,7 +10,7 @@ the main axis and the source index. The top-level schema node is named `chunk`,
 and the entity index column **MUST** be its first column.
 
 <div class="mzp-figure" markdown>
-<img src="../../assets/img/chunked_layout.png" alt="Chunked layout schematic" height="520"/>
+<img src="../../assets/img/chunked_layout.png" alt="Chunked-layout schema: a top-level chunk group holding spectrum_index, mz_chunk_start and mz_chunk_end bounds, an encoded mz_chunk_values list, a chunk_encoding column, and an intensity list, with one table row per chunk." height="520"/>
 </div>
 
 <table class="chunk-table" markdown="0">
