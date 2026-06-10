@@ -17,8 +17,8 @@ copyright: >-
 theme:
   name: material
   language: en
-  logo: assets/img/logo.svg
-  favicon: assets/img/favicon.svg
+  logo: assets/img/mzpeak-mark.png
+  favicon: assets/img/favicon.ico
   icon:
     repo: fontawesome/brands/github
   font:
