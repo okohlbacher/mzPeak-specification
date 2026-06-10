@@ -17,6 +17,7 @@ copyright: >-
 theme:
   name: material
   language: en
+  custom_dir: overrides
   logo: assets/img/mzpeak-mark.png
   favicon: assets/img/favicon.ico
   icon:
@@ -24,25 +25,24 @@ theme:
   font:
     text: IBM Plex Sans
     code: IBM Plex Mono
+  # Two explicit entries (each with a media query) so the initial server-rendered
+  # palette is the brand white header — no flash of Material's default indigo
+  # before the palette script runs. Follows the system preference on first load.
   palette:
-    - media: "(prefers-color-scheme)"
-      toggle:
-        icon: material/brightness-auto
-        name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: white
       accent: indigo
       toggle:
-        icon: material/brightness-7
+        icon: material/weather-sunny
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
       primary: black
       accent: indigo
       toggle:
-        icon: material/brightness-4
-        name: Switch to system preference
+        icon: material/weather-night
+        name: Switch to light mode
   features:
     - navigation.instant
     - navigation.instant.progress

@@ -274,8 +274,8 @@ row in the associated metadata table, as `mz_delta_model`.
     likely desirable.
 
 <div class="mzp-figure" markdown>
-![Thermo dataset with null marking](../assets/img/thermo_null_marking_err.png)
-![Sciex dataset with delta encoding and null marking](../assets/img/sciex_null_marking_delta_encoding_error.png)
+![Reconstruction-error plot for a Thermo dataset: m/z deviation after null marking is negligible across the mass range.](../assets/img/thermo_null_marking_err.png)
+![Reconstruction-error plot for a Sciex dataset using delta encoding plus null marking, showing the small m/z deviation introduced.](../assets/img/sciex_null_marking_delta_encoding_error.png)
 </div>
 
 All MS-Numpress compression methods remain available and still give superior size

@@ -100,6 +100,22 @@ file, and metadata model.
 
     [:octicons-arrow-right-24: Schemas](schemas/spectra.md)
 
+-   __Implementations__
+
+    ---
+
+    The read/write libraries — Rust, Python, R, C#, and JavaScript/TypeScript.
+
+    [:octicons-arrow-right-24: Implementations](implementations.md)
+
+-   __Tools__
+
+    ---
+
+    Converters, the conformance validator, browser viewers, and example data.
+
+    [:octicons-arrow-right-24: Tools](tools.md)
+
 -   __Reference__
 
     ---
