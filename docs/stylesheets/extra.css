@@ -73,39 +73,8 @@
   border: 1px solid var(--md-default-fg-color--lighter);
 }
 
-/* ----------------------------------------------------------------------------
-   Card grid (landing page navigation)
-   -------------------------------------------------------------------------- */
-.mzp-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: 1rem;
-  margin: 1.4rem 0;
-}
-.mzp-card {
-  display: block;
-  padding: 1.1rem 1.2rem;
-  border: 1px solid var(--md-default-fg-color--lightest);
-  border-radius: 0.6rem;
-  background: var(--md-default-bg-color);
-  transition: border-color 120ms, box-shadow 120ms, transform 120ms;
-  color: inherit !important;
-}
-.mzp-card:hover {
-  border-color: var(--md-accent-fg-color);
-  box-shadow: 0 6px 22px -12px rgba(0, 0, 0, 0.35);
-  transform: translateY(-2px);
-}
-.mzp-card h3 {
-  margin: 0 0 0.3rem;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-.mzp-card p {
-  margin: 0;
-  font-size: 0.78rem;
-  color: var(--md-default-fg-color--light);
-}
+/* Landing-page navigation uses Material's built-in `.grid.cards` component
+   (see docs/index.md) — no custom card styling needed here. */
 
 /* ----------------------------------------------------------------------------
    Packed parallel table example

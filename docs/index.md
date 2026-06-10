@@ -55,37 +55,55 @@ file, and metadata model.
 
 ## What you'll find here
 
-<div class="mzp-cards" markdown>
+<div class="grid cards" markdown>
 
-<a class="mzp-card" href="introduction/overview/" markdown>
-### Introduction
-Why mzPeak exists, what problems it solves, and a high-level tour of an archive.
-</a>
+-   __Introduction__
 
-<a class="mzp-card" href="foundations/parquet/" markdown>
-### Foundations
-A short Parquet primer and how multiple Parquet files are bundled into one archive.
-</a>
+    ---
 
-<a class="mzp-card" href="layouts/metadata-tables/" markdown>
-### Data Layouts
-Packed metadata tables, the array index, and the point & chunked signal layouts.
-</a>
+    Why mzPeak exists, what problems it solves, and a high-level tour of an archive.
 
-<a class="mzp-card" href="archive/index-file/" markdown>
-### Archive Organization
-The `mzpeak_index.json` file, data kinds, and entity types that organise a run.
-</a>
+    [:octicons-arrow-right-24: Overview & motivation](introduction/overview.md)
 
-<a class="mzp-card" href="schemas/spectra/" markdown>
-### File Schemas
-Concrete column-level schemas for spectra, chromatograms, and wavelength spectra.
-</a>
+-   __Foundations__
 
-<a class="mzp-card" href="reference/glossary/" markdown>
-### Reference
-Glossary, bibliography, authorship, and the intellectual-property statement.
-</a>
+    ---
+
+    A short Parquet primer and how multiple Parquet files are bundled into one archive.
+
+    [:octicons-arrow-right-24: Parquet & containers](foundations/parquet.md)
+
+-   __Data Layouts__
+
+    ---
+
+    Packed metadata tables, the array index, and the point & chunked signal layouts.
+
+    [:octicons-arrow-right-24: Layouts](layouts/metadata-tables.md)
+
+-   __Archive Organization__
+
+    ---
+
+    The `mzpeak_index.json` file, data kinds, and entity types that organise a run.
+
+    [:octicons-arrow-right-24: The index file](archive/index-file.md)
+
+-   __File Schemas__
+
+    ---
+
+    Concrete column-level schemas for spectra, chromatograms, and wavelength spectra.
+
+    [:octicons-arrow-right-24: Schemas](schemas/spectra.md)
+
+-   __Reference__
+
+    ---
+
+    Glossary, bibliography, authorship, and the intellectual-property statement.
+
+    [:octicons-arrow-right-24: Reference](reference/glossary.md)
 
 </div>
 
