@@ -27,7 +27,7 @@
         "parameters": {
           "type": "array",
           "items": {
-            "$ref": "https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/param.json"
+            "$ref": "https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/param.json"
           },
           "description": "Additional parameters describing this configuration, like the instrument model and serial number"
         }
@@ -49,7 +49,7 @@
         "parameters": {
           "type": "array",
           "items": {
-            "$ref": "https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/param.json"
+            "$ref": "https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/param.json"
           },
           "description": "Additional parameters describing this component, like the particular hardware type or components"
         }

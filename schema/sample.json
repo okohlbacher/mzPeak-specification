@@ -23,7 +23,7 @@
         "parameters": {
           "type": "array",
           "items": {
-            "$ref": "https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/param.json"
+            "$ref": "https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/param.json"
           },
           "description": "Additional parameters describing this sample."
         }

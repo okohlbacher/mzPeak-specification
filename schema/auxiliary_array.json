@@ -12,7 +12,7 @@
   ],
   "properties": {
     "name": {
-      "$ref": "https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/param.json",
+      "$ref": "https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/param.json",
       "description": "A controlled vocabulary term naming this data array. Must be a child of MS:1000513.",
       "examples": [
         { "name": "m/z array", "accession": "MS:1000514" },
@@ -56,7 +56,7 @@
     "parameters": {
       "type": "array",
       "items": {
-        "$ref": "https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/param.json"
+        "$ref": "https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/param.json"
       },
       "description": "Additional parameters describing this data array"
     },

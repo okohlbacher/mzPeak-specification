@@ -33,6 +33,8 @@ Version Draft 5 of version 0.9
     - [ZIP archives](#zip-archives)
       - [Why not TAR?](#why-not-tar)
     - [Unpacked archives](#unpacked-archives)
+- [Relationship to other specifications](#relationship-to-other-specifications)
+  - [Controlled Vocabularies (CV)](#controlled-vocabularies-cv)
 - [Data Layouts](#data-layouts)
   - [Packed Parallel Metadata Tables](#packed-parallel-metadata-tables)
     - [Controlled Vocabulary Terms](#controlled-vocabulary-terms)
@@ -165,6 +167,19 @@ TAR archives are designed for a linear traversal. In order to know all of the fi
 ### Unpacked archives
 
 If an mzPeak archive is stored in an unpacked directory, the directory name is treated as the name of the name of the run file.
+
+# Relationship to other specifications
+
+The format specification described in this document is not being developed in isolation; indeed, it is designed to be complementary to, and thus used in conjunction with, several existing and emerging models. Related specifications include the following:
+
+  1. PSI Universal Spectrum Identifier (http://psidev.info/USI). The PSI Universal Spectrum Identifier is designed to provide a universal mechanism for referring to a specific spectrum in public repositories.
+  2. mzML (https://www.psidev.info/mzml). The current PSI recommendation for storing raw or processed mass spectrometry data.
+  3. SDRF (https://www.psidev.info/sdrf-sample-data-relationship-format).
+  4. imzML (https://github.com/imzML/imzML/).
+
+## Controlled Vocabularies (CV)
+
+
 
 # Data Layouts
 
@@ -755,7 +770,7 @@ Unless otherwise noted, readers _SHOULD_ treat `null` values in the sorting rank
 
 ### Auxiliary Data Arrays
 
-When an array is present in an entry, but is not encoded as a column in the schema, it must be stored as an auxiliary array. This can happen when mixing different kinds of detectors in a single collection, or especially with diagnostic traces where every array might have different dimensions along a shared time axis or subsampled arrays. Auxiliary data arrays have a schema similar to [`binaryDataArray`](https://peptideatlas.org/tmp/mzML1.1.0.html#binaryDataArray) in mzML, encoded in Parquet. They are described in JSON schema at [schema/auxiliary_array.json](https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/auxiliary_array.json)
+When an array is present in an entry, but is not encoded as a column in the schema, it must be stored as an auxiliary array. This can happen when mixing different kinds of detectors in a single collection, or especially with diagnostic traces where every array might have different dimensions along a shared time axis or subsampled arrays. Auxiliary data arrays have a schema similar to [`binaryDataArray`](https://peptideatlas.org/tmp/mzML1.1.0.html#binaryDataArray) in mzML, encoded in Parquet. They are described in JSON schema at [schema/auxiliary_array.json](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/auxiliary_array.json)
 
 ```
 optional group auxiliary_arrays (List) {
@@ -1158,7 +1173,14 @@ TODO: Add wavelength files to examples
       "data_kind": "metadata"
     }
   ],
-  "metadata": {}
+  "metadata": {
+    "version": "0.9.0",
+    "cv_list": [
+      {"id": "MS", "full_name": "Proteomics Standards Initiative Mass Spectrometry Ontology", "uri": "http://purl.obolibrary.org/obo/ms/4.1.248/ms.obo", "version": "4.1.248"},
+      {"id": "UO", "full_name": "Units of measurement ontology", "uri": "http://purl.obolibrary.org/obo/uo/releases/2026-01-16/uo.obo", "version": "2026-01-16"}
+    ],
+    "file_description": {...},
+  }
 }
 ```
 
@@ -1168,14 +1190,15 @@ The `data_kind` and `entity_kind` fields are loose enumerations. They are expect
 
 ## File-Level Metadata
 
-The [file level metadata](#file-level-metadata) *SHOULD* be stored in `$mzpeak_index.metadata` and the metadata Parquet files' key-value pairs as JSON-encoded metadata governed by the associated schemas below:
+The [file level metadata](#file-level-metadata) *SHOULD* be stored in `mzpeak_index.metadata` and the metadata Parquet files' key-value pairs as JSON-encoded metadata governed by the associated schemas below:
 
+  - [`cv_list`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/cv_list.json)
   - [`file_description`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/file_description.json)
   - [`instrument_configuration_list`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/instrument_configuration.json)
   - [`data_processing_method_list`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/data_processing.json)
   - [`software_list`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/software.json)
   - [`sample_list`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/sample.json)
-  - [`scan_settings_list`]() (TODO)
+  - [`scan_settings_list`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/scan_settings_list.json)
   - [`run`](https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/ms_run.json)
 
 

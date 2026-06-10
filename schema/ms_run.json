@@ -13,7 +13,7 @@
     "parameters": {
       "type": "array",
       "items": {
-        "$ref": "https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/param.json"
+        "$ref": "https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/param.json"
       },
       "description": "Parameters describing the run not otherwise covered by the attributes.",
       "default": []
@@ -24,15 +24,15 @@
     },
     "default_data_processing_id": {
         "type": "string",
-        "description": "The default data processing identifier, as drawn from https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/data_processing.json"
+        "description": "The default data processing identifier, as drawn from https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/data_processing.json"
     },
     "default_instrument_id": {
         "type": "integer",
-        "description": "The default instrument configuration, as drawn from https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/instrument_configuration.json"
+        "description": "The default instrument configuration, as drawn from https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/instrument_configuration.json"
     },
     "default_source_file_id": {
         "type": "string",
-        "description": "The default source file the content references, as drawn from https://raw.githubusercontent.com/mobiusklein/mzpeak_prototyping/refs/heads/main/schema/file_description.json"
+        "description": "The default source file the content references, as drawn from https://raw.githubusercontent.com/HUPO-PSI/mzPeak-specification/refs/heads/main/schema/file_description.json"
     },
     "start_time": {
         "type": ["string", "null"],
