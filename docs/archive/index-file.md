@@ -29,9 +29,30 @@ file **MUST** be serialised as UTF-8.
       "data_kind": "metadata"
     }
   ],
-  "metadata": {}
+  "metadata": {
+    "version": "0.9.0",
+    "cv_list": [
+      {
+        "id": "MS",
+        "full_name": "Proteomics Standards Initiative Mass Spectrometry Ontology",
+        "uri": "http://purl.obolibrary.org/obo/ms/4.1.248/ms.obo",
+        "version": "4.1.248"
+      },
+      {
+        "id": "UO",
+        "full_name": "Units of measurement ontology",
+        "uri": "http://purl.obolibrary.org/obo/uo/releases/2026-01-16/uo.obo",
+        "version": "2026-01-16"
+      }
+    ],
+    "file_description": { }
+  }
 }
 ```
+
+The `metadata` object carries the archive `version`, the `cv_list` declaring every
+controlled vocabulary used (with source URI and version, so CURIEs resolve
+reproducibly), and the [file-level metadata](#file-level-metadata) objects.
 
 Governed by the JSON Schema
 [`schema/mzpeak_index.json`](https://github.com/HUPO-PSI/mzPeak-specification/blob/main/schema/mzpeak_index.json).
@@ -47,12 +68,13 @@ File-level metadata **SHOULD** be stored in `mzpeak_index.metadata` and in the
 metadata Parquet files' key–value pairs, as JSON encoded according to the schemas
 below:
 
+- [`cv_list`](https://github.com/HUPO-PSI/mzPeak-specification/blob/main/schema/cv_list.json)
 - [`file_description`](https://github.com/HUPO-PSI/mzPeak-specification/blob/main/schema/file_description.json)
 - [`instrument_configuration_list`](https://github.com/HUPO-PSI/mzPeak-specification/blob/main/schema/instrument_configuration.json)
 - [`data_processing_method_list`](https://github.com/HUPO-PSI/mzPeak-specification/blob/main/schema/data_processing.json)
 - [`software_list`](https://github.com/HUPO-PSI/mzPeak-specification/blob/main/schema/software.json)
 - [`sample_list`](https://github.com/HUPO-PSI/mzPeak-specification/blob/main/schema/sample.json)
-- `scan_settings_list` *(schema forthcoming)*
+- [`scan_settings_list`](https://github.com/HUPO-PSI/mzPeak-specification/blob/main/schema/scan_settings_list.json)
 - [`run`](https://github.com/HUPO-PSI/mzPeak-specification/blob/main/schema/ms_run.json)
 
 !!! question "Open item — cleartext vs. encryptable metadata"

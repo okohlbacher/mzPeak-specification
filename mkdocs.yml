@@ -121,6 +121,7 @@ nav:
   - Introduction:
       - Overview: introduction/overview.md
       - Motivation: introduction/motivation.md
+      - Related Specifications: introduction/related-specifications.md
       - Notational Conventions: introduction/conventions.md
   - Foundations:
       - Anatomy of a Parquet File: foundations/parquet.md
