@@ -120,6 +120,8 @@ This document describes both a file format and a set of suggested algorithms for
 
 ## Overview
 
+This section gives a high-level picture of what an mzPeak archive contains and how its parts fit together, before the later chapters specify each one in detail.
+
 ### What _is_ mzPeak?
 
 mzPeak is an archive of multiple [Parquet](https://parquet.apache.org/) files, stored directly in an _uncompressed_ [ZIP](<https://en.wikipedia.org/wiki/ZIP_(file_format)>)
@@ -172,6 +174,8 @@ TODO: write more here
 
 ## Container
 
+An mzPeak archive is made up of several Parquet files that must travel together as a single addressable unit. This section describes the container that binds them — the ZIP archive form and its equivalent unpacked directory or object-store prefix.
+
 ### ZIP archives
 
 In order to pack multiple Parquet tables together under a single file name on disk, we need a container file format. To that end we use the [ZIP](https://www.iana.org/assignments/media-types/application/zip) archive to bundle multiple files together. ZIP files start with a header containing the magic bytes followed by a sequence of blocks of (header, file) pairs, terminating with a central directory listing how to find each file in the archive. Files saved in a ZIP may be stored compressed or uncompressed. When mzPeak is stored in a ZIP it **MUST** store its member files uncompressed. Files stored uncompressed can be read directly without requiring some intervening decompression to occur to reveal the Parquet file, and the Parquet file itself contains layered compression that is superior to that of most plain ZIP compressors.
@@ -198,6 +202,8 @@ The format specification described in this document is not being developed in is
 
 
 # Data Layouts
+
+An mzPeak archive holds two broad categories of information: *metadata*, which describes the entities in a run, and *signal data*, the numeric arrays themselves. This chapter specifies the physical layouts used for each — the packed parallel tables that carry metadata, and the point and chunked layouts that carry signal.
 
 ## Packed Parallel Metadata Tables
 
@@ -369,6 +375,8 @@ A writer implementation is _SHOULD_ to minimize the number of interspersed rows 
 <img src="static/img/packed_tables.png" width="40%" style="background-color: white; padding: 1em;"/> <img src="static/img/sparse_tables.png" width="40%" style="background-color: white; padding: 1em;"/>
 
 ## Signal Data Layouts
+
+Signal data — the parallel numeric arrays that make up spectra, chromatograms, and similar entities — may be stored in more than one physical arrangement. This section describes how arrays relate to Parquet columns, how they are annotated through the array index, and the two layouts, [point](#point-layout) and [chunked](#chunked-layout), available for storing them.
 
 ### Arrays and Columns
 
