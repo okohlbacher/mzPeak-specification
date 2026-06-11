@@ -89,7 +89,9 @@ Version Draft 5 of version 0.9
 
 # Abstract
 
-mzPeak is an open, columnar file format for mass spectrometry data. It stores one or more mass spectrometry runs as a collection of [Apache Parquet](https://parquet.apache.org/) files, bundled in an uncompressed [ZIP](<https://en.wikipedia.org/wiki/ZIP_(file_format)>) archive or an equivalent unpacked directory or object-store prefix, and described by a JSON index. Drawing on the data model and controlled-vocabulary conventions of mzML (1), mzPeak re-expresses them in a strongly typed, columnar layout that supports random and partial access, adaptive compression, and cloud-native object-store access, while preserving the full fidelity of spectra, chromatograms, and their metadata. The format is extensible by design: additional *data kinds* and *entity types* — for example peak lists, ion mobility, mass spectrometry imaging, and wavelength spectra — can be added without breaking readers that do not understand them. This document specifies the mzPeak container, its Parquet schemas, its metadata and signal-data layouts, and the conventions for representing controlled-vocabulary terms.
+mzPeak is an open, next-generation file format for mass spectrometry data. Advances in MS instrumentation — higher resolution, faster scan rates, greater sensitivity, and the growing use of ion mobility and imaging — have sharply increased the volume and dimensionality of the data produced in proteomics, metabolomics, and lipidomics. Established open formats such as mzML and imzML increasingly struggle with the resulting file sizes, data-access patterns, and metadata demands, while vendor-specific formats offer faster access at the cost of interoperability and long-term archival stability. mzPeak is designed to address these needs as a community standard; the motivation and design rationale are set out in the accompanying white paper (1).
+
+The format takes a hybrid approach: an archive of [Apache Parquet](https://parquet.apache.org/) tables — packaged in an uncompressed ZIP container, or an unpacked directory, together with a small JSON index — that stores numerical signal data as compact, columnar binary while keeping metadata both human- and machine-readable and anchored in the PSI-MS controlled vocabulary. Building on the widely available Apache Parquet and Apache Arrow libraries rather than a single core implementation, the on-disk structure is language-independent. Uncompressed archive members and a required Parquet page index let a reader locate and decode a single spectrum without parsing an entire run, the basis for random access from local disk, object storage, or over HTTP. This document specifies that format: its container, signal-data layouts, index file, and metadata model.
 
 # Introduction
 
@@ -1582,95 +1584,109 @@ TODO: The mzPeak name is currently held in trust by the OpenMS Inc. The details 
 
 # Glossary
 
-Terms are listed alphabetically. Controlled vocabulary examples use PSI-MS (`MS`)
-accessions unless otherwise noted.
+**Apache Arrow**
+:   An in-memory columnar data model that shares Parquet's columnar abstraction; Arrow and Parquet schemas map to one another and are straightforward to convert between.
 
-**Accession** — The identifier of a term within a controlled vocabulary, e.g. `1000016` in `MS:1000016`. Together with the CV code it forms a CURIE.
+**Apache Parquet**
+:   The strongly-typed, compressed, columnar on-disk format in which each facet of an mzPeak archive is stored. See [Anatomy of a Parquet file](#anatomy-of-a-parquet-file).
 
-**Array index** — A JSON structure held in a signal-data file's Parquet key-value metadata (`<entity_type>_array_index`) that annotates each data column with its CV data type, array type, unit, layout, transform, buffer priority, and sorting rank — what makes an otherwise bare numeric column self-describing.
+**Centroid**
+:   A spectrum (or peak list) reduced to discrete m/z–intensity peaks, as opposed to profile data.
 
-**Auxiliary array** — A data array carried inside a metadata table's `auxiliary_arrays` value rather than as a first-class schema column. Self-contained like mzML's `binaryDataArray` (its own compression, data type, and parameters), but it cannot be sliced or searched without decoding the whole array. Used for arrays of mismatched length or per-entry heterogeneity.
+**Chromatogram**
+:   A measurement over time (for example a total ion current or extracted-ion trace); one of the mzPeak entity types. See [Entity Type](#entity-type).
 
-**Buffer priority** — Array-index field (`primary`, …) marking which column a reader should default to when several could supply the same quantity (e.g. the primary m/z array).
+**Chunked layout**
+:   A signal-data layout that cuts the sorted main axis into non-overlapping chunks (for example fixed m/z windows) — recording each chunk's start, end, and index — to allow random access along the axis. See [Chunked Layout](#chunked-layout).
 
-**Centroid spectrum** — A spectrum reduced to discrete m/z–intensity peaks (`MS:1000127`); contrast profile spectrum.
+**Controlled vocabulary (CV)**
+:   A curated set of defined terms with stable accessions, used to annotate metadata unambiguously. mzPeak uses the PSI-MS controlled vocabulary.
 
-**Chromatogram** — An entity type describing a measurement *over time* (e.g. a total-ion or extracted-ion chromatogram, or a diagnostic trace); contrast spectrum.
+**CURIE**
+:   A compact URI of the form `prefix:reference` (for example `MS:1000559`) used to reference a controlled-vocabulary term.
 
-**Chunked layout** — A signal-data layout that stores each entry's arrays as length-delimited chunks, trading random-access granularity for compactness; one of the two layouts a `data arrays` or `peaks` file may use. Contrast point layout.
+**Data kind**
+:   An index-file field declaring a member's semantics and expected schema family: `data arrays`, `peaks`, `metadata`, `proprietary`, or `other`. See [Data Kind](#data-kind).
 
-**Column (array stored as)** — An array burned into the Parquet schema and registered in the array index, subject to Parquet's adaptive encoding and compression and to page-index slicing and predicate filtering. Contrast auxiliary array.
+**Delta encoding**
+:   An opaque transform that stores successive differences instead of absolute values, compressing sorted axes such as m/z efficiently.
 
-**Controlled vocabulary (CV)** — A curated term set (principally PSI-MS and the Unit Ontology) that gives metadata stable, machine-resolvable meaning. mzPeak uses CV terms three ways: as column names, as structural references, and as `parameters` entries.
+**Entity type**
+:   An index-file field declaring what a member describes: `spectrum`, `chromatogram`, `wavelength spectrum`, or `other`. See [Entity Type](#entity-type).
 
-**Column-name inflection** — The rule that turns a CV term into a Parquet-legal column name, `${CV_CODE}_${CV_ACCESSION}_${CLEANED_NAME}` (e.g. `MS_1000016_scan_start_time`), rewriting `m/z` to `mz` and appending optional `_unit_*` suffixes.
+**HUPO-PSI**
+:   The Human Proteome Organization Proteomics Standards Initiative, the body that governs mzPeak and maintains the PSI-MS controlled vocabulary.
 
-**CURIE** — A compact identifier of the form `PREFIX:ACCESSION` (e.g. `MS:1000514`) for a CV term; the value form used throughout mzPeak.
+**imzML**
+:   The mzML-derived open standard for mass-spectrometry imaging data (XML plus an `.ibd` binary sidecar).
 
-**Data kind** — The `mzpeak_index.json` field declaring a file's role and expected schema: one of `data arrays`, `peaks`, `metadata`, `proprietary`, or `other` (a loose, extensible enumeration).
+**Index file (`mzpeak_index.json`)**
+:   The JSON manifest listing every archive member with its `entity_type` and `data_kind`, so a reader resolves files by meaning rather than by name. See [Index File](#index-file---mzpeak_index.json).
 
-**Entity type** — The `mzpeak_index.json` field declaring what a file describes: `spectrum`, `chromatogram`, `wavelength spectrum`, or `other` (a loose, extensible enumeration).
+**Ion mobility**
+:   A gas-phase separation dimension (for example drift time or 1/K0) that may be stored as an array parallel to m/z and intensity.
 
-**Facet** — One of the parallel sub-schemas (Parquet group / Arrow struct) packed into a metadata table, e.g. `spectrum`, `scan`, `precursor`, `selected_ion`.
+**m/z**
+:   Mass-to-charge ratio; the primary measurement axis of a mass spectrum.
 
-**File-level metadata** — Run-wide metadata (`file_description`, `instrument_configuration_list`, `data_processing_method_list`, `software_list`, `sample_list`, `scan_settings_list`, `run`) stored in `mzpeak_index.metadata` and/or the metadata Parquet footers as JSON.
+**mzML**
+:   The HUPO-PSI XML standard for mass-spectrometry data; mzPeak draws on its data model and reuses concepts such as controlled vocabularies where feasible.
 
-**Foreign key / primary key** — Relational-database terms used to describe how packed parallel facets interlink (e.g. `scan.source_index` references `spectrum.index`); a `null` foreign key means the related record does not exist.
+**mzPeak**
+:   An open, columnar mass-spectrometry data format: a ZIP archive (or directory) of Apache Parquet facets plus a JSON index, annotated using the PSI-MS controlled vocabulary under HUPO-PSI.
 
-**Index file (`mzpeak_index.json`)** — The root UTF-8 JSON manifest listing every member file with its `entity_type` and `data_kind`, so files are resolved by meaning rather than by filename.
+**Null marking**
+:   A profile-data compression technique that replaces flanking zero-intensity points with `null` m/z and intensity values — so Parquet stores only a validity bit — reconstructing positions from a fitted m/z-spacing model. See [Null Marking](#null-marking).
 
-**Logical type / physical type** — Parquet's distinction between on-disk byte encoding (physical) and the higher-level type it maps to (logical); mzPeak data stays portable across the many-to-many Parquet–Arrow type mapping.
+**Numpress (MS-Numpress)**
+:   A family of lossy and lossless numeric compression schemes for m/z and intensity arrays, usable in mzPeak as an opaque transform.
 
-**m/z array · intensity array** — The paired arrays of a spectrum: mass-to-charge coordinates and their corresponding signal abundances.
+**Opaque transform**
+:   A per-array encoding (for example delta encoding or Numpress) applied within a chunk and recorded so a reader can decode it. Some transforms (such as certain Numpress modes) are lossy.
 
-**MS level** — The stage of tandem mass spectrometry (`MS:1000511`): 1 for survey scans, 2 or higher for fragmentation.
+**Packed parallel metadata tables**
+:   The metadata layout that stores several related sub-tables (spectrum, scan, precursor, selected ion) side by side, linked by primary- and foreign-key index columns. See [Packed Parallel Metadata Tables](#packed-parallel-metadata-tables).
 
-**mzPeak** — A mass-spectrometry data format: an archive (uncompressed ZIP or unpacked directory) of Apache Parquet files plus a JSON index, each file describing one facet of a mass-spectrometry run.
+**Page index**
+:   A Parquet footer structure — which mzPeak writers MUST emit — that enables random access below the row-group level.
 
-**Packed parallel (metadata) tables** — A layout that co-locates several relational facets in one Parquet file as nullable parallel groups, keeping each facet's rows contiguous to maximize compressibility. Contrast sparse tables.
+**Point layout**
+:   A signal-data layout that stores arrays as-is in parallel columns alongside a repeated entity-index column. See [Point Layout](#point-layout).
 
-**Page index** — A Parquet per-page min/max index that mzPeak writers MUST emit, enabling range filtering and random access without scanning whole columns.
+**Profile**
+:   A spectrum stored as a quasi-continuous trace of m/z–intensity samples, as opposed to centroid data.
 
-**`parameters` list** — A `parameters` column, permitted in any metadata facet: a list of typed CV or user parameters (value, accession, name, unit) — the analogue of mzML's `<cvParam>` and `<userParam>` — for metadata not promoted to dedicated columns.
+**PSI-MS CV**
+:   The controlled vocabulary of mass-spectrometry terms maintained by HUPO-PSI; the semantic backbone of mzPeak metadata.
 
-**Peaks file** — A file shaped like a `data arrays` file but with `data_kind: peaks`, holding processed or centroided signal that refines a less-processed entry in the `data arrays` file (e.g. a vendor profile-and-centroid pair).
+**Row group**
+:   A horizontal partition of a Parquet file — the unit of columnar compression and coarse random access.
 
-**Point layout** — A signal-data layout that stores arrays as-is in parallel columns under a `point` group led by an entity-index column; transparent, page-index-filterable, and multidimensionally queryable. Contrast chunked layout.
+**Sorting rank**
+:   An array's ordering role within a signal layout; sorting rank 0 is the sorted "main axis" around which all parallel arrays are arranged. Arrays of differing length SHOULD instead be stored as auxiliary arrays.
 
-**Profile spectrum** — A spectrum stored as a continuous sampled trace (`MS:1000128`); contrast centroid spectrum.
+**Total ion current (TIC)**
+:   The summed intensity recorded for a spectrum; frequently traced over time as a chromatogram.
 
-**Proprietary (data kind)** — A vendor-owned member whose schema and format are implementation-defined and may be ignored by non-vendor readers; it need not be a Parquet file.
-
-**PSI-MS CV** — The HUPO-PSI mass-spectrometry controlled vocabulary (`MS` prefix) that supplies most of mzPeak's term semantics.
-
-**Run** — A single mass-spectrometry acquisition described by an archive; for an unpacked archive, the directory name is the run name.
-
-**Sorting rank** — The array-index field declaring sort order within an entry; rank 0 is the primary axis (e.g. m/z) that all parallel arrays are ordered against. An unsorted ranked array MUST be re-sorted on write.
-
-**Sparse tables** — The discouraged packed-table state in which facet rows are interleaved with null rows, hurting compressibility. Contrast packed parallel tables.
-
-**Transform (opaque array transform)** — An optional, reversible encoding applied to an array's stored bytes (recorded in the array index) that hides values from Parquet's native encoders; usable only outside the page-index-filterable layouts.
-
-**Unit Ontology (UO)** — The controlled vocabulary (`UO` prefix) that supplies measurement units where PSI-MS does not.
-
-**Unpacked archive** — An mzPeak archive materialized as a directory or object-store prefix instead of a ZIP, with the directory name serving as the run name.
-
-**Wavelength spectrum** — An entity type whose measurement axis is electromagnetic wavelength rather than m/z (e.g. a UV/Vis absorbance detector).
-
-**ZIP archive (uncompressed)** — The default mzPeak container; members MUST be stored uncompressed so each Parquet file is directly readable and relies on Parquet's own layered compression. Chosen over TAR for its central-directory random access and per-file encryptability.
+**Zero-run stripping**
+:   A profile-data size reduction that removes all but the first and last zero-intensity points in empty regions of a spectrum. See [Zero Run Stripping](#zero-run-stripping).
 
 # References
 
-The mzPeak format is described in full in the white paper below, which should be cited
-as the primary reference for the format:
+1. Van Den Bossche T, Alexandrov T, Bilbao A, *et al.* mzPeak: Designing a Scalable, Interoperable, and Future-Ready Mass Spectrometry Data Format. *Journal of Proteome Research.* 2025;24(11):5329–5335. doi:[10.1021/acs.jproteome.5c00435](https://doi.org/10.1021/acs.jproteome.5c00435) — the mzPeak white paper; primary reference for the format.
 
-- Van Den Bossche, T.; Alexandrov, T.; Bilbao, A.; Bittremieux, W.; Brigante, F. I.; Chambers, M. C.; Charkow, J.; Deutsch, E.; Dowsey, A. W.; El Abiead, Y.; Gabriels, R.; Hecht, H.; Heuckeroth, S.; Klein, J. A.; Knierman, M.; Martens, L.; Moritz, R. L.; McCall, L.-I.; Neumann, S.; Perez-Riverol, Y.; Röst, H. L.; Price, E. J.; Shofstahl, J.; Tabb, D. L.; Uszkoreit, J.; Vizcaíno, J. A.; Wang, M.; Willems, S.; Winkelhardt, D.; Kohlbacher, O.; Wein, S. P. mzPeak: Designing a Scalable, Interoperable, and Future-Ready Mass Spectrometry Data Format. *Journal of Proteome Research* **2025**, *24* (11), 5329–5335. DOI: [10.1021/acs.jproteome.5c00435](https://doi.org/10.1021/acs.jproteome.5c00435).
+2. Bradner S. Key words for use in RFCs to Indicate Requirement Levels. BCP 14, RFC 2119; 1997. doi:[10.17487/RFC2119](https://doi.org/10.17487/RFC2119) — defines the MUST / SHOULD / MAY requirement levels used throughout this specification (cited above as "(2)").
 
-1. Martens, L.; Chambers, M.; Sturm, M.; Kessner, D.; Levander, F.; Shofstahl, J.; Tang, W. H.; Römpp, A.; Neumann, S.; Pizarro, A. D.; Montecchi-Palazzi, L.; Tasman, N.; Coleman, M.; Reisinger, F.; Souda, P.; Hermjakob, H.; Binz, P.-A.; Deutsch, E. W. mzML — a Community Standard for Mass Spectrometry Data. *Molecular & Cellular Proteomics* **2011**, *10* (1), R110.000133. DOI: [10.1074/mcp.R110.000133](https://doi.org/10.1074/mcp.R110.000133).
-2. Bradner, S. Key Words for Use in RFCs to Indicate Requirement Levels. RFC 2119, Internet Engineering Task Force, 1997. DOI: [10.17487/RFC2119](https://doi.org/10.17487/RFC2119).
-3. Apache Parquet. <https://parquet.apache.org/>
-4. Apache Arrow. <https://arrow.apache.org/>
-5. Harris, C. R.; Millman, K. J.; van der Walt, S. J.; et al. Array Programming with NumPy. *Nature* **2020**, *585*, 357–362. DOI: [10.1038/s41586-020-2649-2](https://doi.org/10.1038/s41586-020-2649-2). <https://numpy.org/>
-6. Apache Arrow — Python bindings (PyArrow). <https://arrow.apache.org/docs/python/index.html>
-7. ZIP file format — IANA media type `application/zip`. <https://www.iana.org/assignments/media-types/application/zip>
-8. mzPeak trademark statement. Zenodo. DOI: [10.5281/zenodo.20054899](https://doi.org/10.5281/zenodo.20054899).
+3. Martens L, Chambers M, Sturm M, *et al.* mzML — a Community Standard for Mass Spectrometry Data. *Molecular & Cellular Proteomics.* 2011;10(1):R110.000133. doi:[10.1074/mcp.R110.000133](https://doi.org/10.1074/mcp.R110.000133)
+
+4. Teleman J, Dowsey AW, Levander F, *et al.* Numerical Compression Schemes for Proteomics Mass Spectrometry Data. *Molecular & Cellular Proteomics.* 2014;13(6):1537–1542. doi:[10.1074/mcp.O114.037879](https://doi.org/10.1074/mcp.O114.037879) — MS-Numpress.
+
+5. Schramm T, Hester A, Klinkert I, *et al.* imzML — A common data format for the flexible exchange and processing of mass spectrometry imaging data. *Journal of Proteomics.* 2012;75(16):5106–5110. doi:[10.1016/j.jprot.2012.07.026](https://doi.org/10.1016/j.jprot.2012.07.026)
+
+6. Dai C, Füllgrabe A, Pfeuffer J, *et al.* A proteomics sample metadata representation for multiomics integration and big data analysis. *Nature Communications.* 2021;12:5854. doi:[10.1038/s41467-021-26111-3](https://doi.org/10.1038/s41467-021-26111-3) — SDRF-Proteomics.
+
+7. Apache Software Foundation. Apache Parquet. <https://parquet.apache.org/>
+
+8. Apache Software Foundation. Apache Arrow. <https://arrow.apache.org/>
+
+9. HUPO-PSI. PSI-MS Controlled Vocabulary. <https://github.com/HUPO-PSI/psi-ms-CV>
