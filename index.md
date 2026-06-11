@@ -1559,7 +1559,7 @@ Wissenschaftlicher Mitarbeiter, Institute for Bioinformatics and Medical Informa
 samuel.wein@uni-tuebingen.de
 
 Oliver Kohlbacher
-Professor, Applied Bioinformatics, Dept. of Computer Science, University of Tübingen; Director, Institute for Bioinformatics and Medical Informatics, University of Tübingen; Director, Institute for Translational Bioinformatics, University Hospital Tübingen
+Applied Bioinformatics, Dept. of Computer Science, University of Tübingen
 oliver.kohlbacher@uni-tuebingen.de
 
 TODO: Fill in with more people from the mailing list
