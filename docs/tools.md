@@ -16,7 +16,7 @@ see [Implementations](implementations.md).
 
 ## Validation
 
-- **mzPeakValidator** — a language-independent, profile-driven conformance
+- **mzPeak Validator** — a language-independent, profile-driven conformance
   validator (`mzpeak-validate file.mzpeak`). It checks index-file structure,
   schema consistency, JSON-schema compliance, CV accession/name agreement,
   reasonable data types, and cross-file consistency (for example that the
