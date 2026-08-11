@@ -71,6 +71,7 @@
             "proprietary",
             "wavelength_spectrum"
           ],
+          "$comment": "Controlled values are spelled with underscores, not spaces: `wavelength_spectrum`. A reader encountering a value outside the controlled list treats it as `other`, so this is intentionally not a closed `enum`.",
           "description": "The things being described in one facet or another by this file"
         },
         "data_kind": {
@@ -79,9 +80,14 @@
             "data_arrays",
             "metadata",
             "peaks",
+            "scans",
+            "precursors",
+            "selected_ions",
+            "products",
             "other",
             "proprietary"
           ],
+          "$comment": "Controlled values are spelled with underscores, not spaces: `data_arrays`, `selected_ions`. A reader encountering a value outside the controlled list treats it as `other`, so this is intentionally not a closed `enum`.",
           "description": "The facet of the thing being described in this file"
         },
         "column_mapping": {
