@@ -127,7 +127,9 @@ efficiency.
     ```
 
 ??? info "Multi-dimensional chunking postponed for the future"
-    Currently, chunking is only permitted in one dimension, the added complexity of chunking in multiple dimensions was not deemed necessary *yet*. There may come a time when we have high enough density that it becomes worthwhile to support. If you believe you have a use case, let us know!
+    Currently, chunking is only permitted in one dimension, the added complexity of chunking in multiple dimensions was not deemed necessary *yet*. Current instruments do not produce large enough and dense enough ion mobility dimensions to rival the m/z dimension for compression difficulty.
+
+    There may come a time when we have high enough density that it becomes worthwhile to support by adding additional `chunk_start`, `chunk_end`, chunk_encoding`, and `chunk_values` columns. If you believe you have a use case, let us know!
 
 ## Chunk encodings
 
@@ -135,12 +137,10 @@ efficiency.
 
 > Chunk-encoding CV term: [`MS:1000576` — no compression](http://purl.obolibrary.org/obo/MS_1000576)
 
-When storing centroids, or data that are not similarly spaced (as is usually the
-case for pre-centroided spectra), but still wanting the chunked layout, no
-special encoding of the chunk values is necessary. Values within each chunk are
-written as-is to the chunk-values array. This does not improve compressibility,
-but it keeps a consistent schema for other entries that *would* benefit from a
-different encoding.
+When storing centroids, or sparse data that are not similarly spaced but still wanting the chunked layout,
+no special encoding of the chunk values is necessary. Values within each chunk are written as-is to the
+chunk-values array. This does not improve compressibility, but it keeps a consistent schema for other
+entries that *would* benefit from a different encoding.
 
 !!! note
     The start point is *excluded* from the chunk-values array.
@@ -253,9 +253,7 @@ the array index **MUST** be the *decoded* array's real type. Column names
 `intensity_numpress_slof_bytes`.
 
 ??? question "Transform name or accession code?"
-    We use a human readable name here, but it is not obviously stable. We could embed a CURIE in the column name like [MS_1002314](http://purl.obolibrary.org/obo/MS_1002314){ .foo } instead for `intensity_MS_1002314_bytes`, but this is unnecessarily cryptic when the source of truth is the [array index](./signal-data.md#the-array-index)
-
-!!! info "Lossy transformations"
+    We use a human readable name here, but it is not obviously stable. We could embed a CURIE in the column name like [MS_1002314](http://purl.obolibrary.org/obo/MS_1002314) instead for `intensity_MS_1002314_bytes`, but this is unnecessarily cryptic when the source of truth is the [array index](./signal-data.md#the-array-index)
 
 
 ## Reading a single entry from the chunked encoding

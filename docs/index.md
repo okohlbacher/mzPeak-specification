@@ -47,8 +47,9 @@ The format takes a hybrid approach: an archive of
 [Apache Parquet](https://parquet.apache.org/) tables — packaged in an
 uncompressed ZIP container, or an unpacked directory, together with a small JSON
 index — that stores numerical signal data as compact, columnar binary while
-keeping metadata both human- and machine-readable and anchored in the PSI-MS
-controlled vocabulary. Building on the widely available Apache Parquet and Apache
+keeping metadata both human- and machine-readable and anchored in the
+[PSI-MS controlled vocabulary](https://www.ebi.ac.uk/ols4/ontologies/ms).
+Building on the widely available Apache Parquet and Apache
 Arrow libraries rather than a single core implementation, the on-disk structure
 is language-independent. Uncompressed archive members and a required Parquet page
 index let a reader locate and decode a single spectrum without parsing an entire
@@ -104,7 +105,7 @@ file, and metadata model.
 
     ---
 
-    The read/write libraries — Rust, Python, R, C#, and JavaScript/TypeScript.
+    The read/write libraries — Rust, Python, R, C#, Java, JavaScript/TypeScript, and C++.
 
     [:octicons-arrow-right-24: Implementations](implementations.md)
 
@@ -144,14 +145,16 @@ Additional Parquet files may be added to cover further modalities (for example
 
 ## Reference implementations
 
-mzPeak is backed by five independent, from-scratch implementations (not bindings
+mzPeak is backed by seven independent, from-scratch implementations (not bindings
 to a single core):
 
 - **Rust** — read/write reference implementation · [HUPO-PSI/mzPeak](https://github.com/HUPO-PSI/mzPeak)
-- **Python** — read-only, zero-copy Arrow/Pandas API
-- **R** — read-only, `dplyr`-compatible access
+- **Python** — read-only, zero-copy Arrow/Pandas API · [mzpeak_prototyping](https://github.com/mobiusklein/mzpeak_prototyping/tree/main/python)
+- **R** — read-only, `dplyr`-compatible access · [mzpeak_prototyping](https://github.com/mobiusklein/mzpeak_prototyping/tree/main/R)
 - **C#** — read/write · [HUPO-PSI/mzPeak.NET](https://github.com/HUPO-PSI/mzPeak.NET)
+- **Java** — read/write demonstrator · [okohlbacher/mzPeakJ](https://github.com/okohlbacher/mzPeakJ)
 - **JavaScript / TypeScript** — read-only, runs in the browser, Node, and Deno · [online viewer](https://hupo-psi.github.io/mzpeakts/)
+- **C++** — read-only, work in progress · [OpenMS/mzpeak](https://github.com/OpenMS/mzpeak)
 
 See [Implementations](implementations.md) for details, and [Tools](tools.md) for
 converters, the conformance validator, and viewers.
@@ -161,6 +164,6 @@ converters, the conformance validator, and viewers.
 This document provides information to the proteomics community about the mzPeak
 file format. Distribution is unlimited. It will be ratified via the HUPO
 Proteomics Standards Initiative (PSI) Document Process, and any alterations
-**MUST** also follow the HUPO-PSI Document Process.
+must also follow the HUPO-PSI Document Process.
 
 > **Version:** Draft 5 of version 0.9

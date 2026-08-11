@@ -111,10 +111,6 @@ markdown_extensions:
       alternate_style: true
   - pymdownx.tilde
 
-extra_javascript:
-  - javascripts/mathjax.js
-  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
-
 plugins:
   - search
   - enumerate-headings:
@@ -126,17 +122,18 @@ plugins:
   # - exporter:
   #     formats:
   #       pdf:
-          # enabled: !ENV [MKDOCS_EXPORTER_PDF, true]
-          # concurrency: 8
-          # stylesheets:
-          #   - resources/stylesheets/pdf.scss
-          # covers:
-          #   front: resources/templates/covers/front.html.j2
-          #   back: resources/templates/covers/back.html.j2
-          # aggregator:
-          #   enabled: true
-          #   output: document.pdf
-          #   covers: all
+  #         # enabled: !ENV [MKDOCS_EXPORTER_PDF, true]
+  #         enabled: false
+  #         concurrency: 8
+  #         # stylesheets:
+  #         #   - resources/stylesheets/pdf.scss
+  #         # covers:
+  #         #   front: resources/templates/covers/front.html.j2
+  #         #   back: resources/templates/covers/back.html.j2
+  #         aggregator:
+  #           enabled: true
+  #           output: document.pdf
+  #           covers: all
 
 nav:
   - Home: index.md
@@ -149,7 +146,7 @@ nav:
       - Anatomy of a Parquet File: foundations/parquet.md
       - Container & Archive: foundations/container.md
   - Data Layouts:
-      - Packed Parallel Metadata Tables: layouts/metadata-tables.md
+      - Metadata Tables: layouts/metadata-tables.md
       - Signal Data Model: layouts/signal-data.md
       - Storage Models:
         - Point Layout: layouts/point-layout.md
@@ -159,7 +156,7 @@ nav:
       - The Index File: archive/index-file.md
       - Data Kinds: archive/data-kinds.md
       - Entity Types: archive/entity-types.md
-      - Run-Level Metadata:
+      - Run-Level Metadata Schemas:
         - Parameters: archive/param.md
         - Controlled Vocabularies: archive/cv_list.md
         - File Description: archive/file_description.md
@@ -169,6 +166,7 @@ nav:
         - Samples: archive/sample.md
         - Scan Settings: archive/scan_settings_list.md
         - MS Run: archive/ms_run.md
+      - Index File Schema: archive/index_file_components.md
   - File Schemas:
       - Spectra: schemas/spectra.md
       - Chromatograms: schemas/chromatograms.md

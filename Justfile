@@ -11,15 +11,15 @@ setup:
 
 # Live-reload preview at http://127.0.0.1:8000
 serve:
-    {{py}}/mkdocs serve
+    uv run mkdocs serve
 
 # Strict production build into ./site (fails on broken links).
 build:
-    {{py}}/mkdocs build --clean --strict
+    uv run mkdocs build --clean --strict
 
 # Build and deploy to the gh-pages branch (CI normally does this).
 deploy:
-    {{py}}/mkdocs gh-deploy --force
+    uv run mkdocs gh-deploy --force
 
 # Legacy single-file pandoc build, kept for reference.
 build-legacy:
@@ -29,7 +29,7 @@ build-legacy:
 
 # Validate the JSON Schemas under schema/.
 validate-jsonschema:
-    {{py}}/check-jsonschema -v --schemafile http://json-schema.org/draft-07/schema \
+    uv run check-jsonschema -v --schemafile http://json-schema.org/draft-07/schema \
         schema/array_index.json \
         schema/auxiliary_array.json \
         schema/cv_list.json \
@@ -53,3 +53,4 @@ render-jsonschema:
     uv run "script/schema_to_md.py" "schema/sample.json" -o "docs/archive/sample.md"
     uv run "script/schema_to_md.py" "schema/scan_settings_list.json" -o "docs/archive/scan_settings_list.md"
     uv run "script/schema_to_md.py" "schema/ms_run.json" -o "docs/archive/ms_run.md"
+    uv run "script/schema_to_md.py" "schema/mzpeak_index.json" -o "docs/archive/index_file_components.md"

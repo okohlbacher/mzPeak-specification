@@ -1,5 +1,16 @@
 {% extends "base.html" %}
 
+<!-- When built for mzpeak.org/spec/ (mkdocs.mzpeak-org.yml sets
+     extra.mzpeak_org_embed), show a slim banner linking back to the main site
+     so the spec reads as part of mzpeak.org, not a detached doc set. The block
+     stays empty in the canonical HUPO-PSI build, where the flag is unset. -->
+{% block announce %}
+  {% if config.extra.mzpeak_org_embed %}
+    <a href="https://www.mzpeak.org/" style="color: inherit; font-weight: 600;">&larr; mzpeak.org</a>
+    &nbsp;&middot;&nbsp; mzPeak Specification — Version&nbsp;0.9 (Draft)
+  {% endif %}
+{% endblock %}
+
 <!-- Open Graph / Twitter social metadata. A static preview image (the mzPeak
      mark) is used rather than the cairo-dependent social-cards plugin, to keep
      the CI build free of system image libraries. -->

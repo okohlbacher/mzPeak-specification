@@ -5,7 +5,15 @@
 A conformant archive MUST contain `mzpeak_index.json` at its root. All other members are
 discovered through it; readers MUST NOT depend on member names other than `mzpeak_index.json`.
 mzPeak files containing only metadata (no spectra, no chromatograms) are thus still legal
-mzPeak archives.
+mzPeak archives. Additionally, any of the Parquet files **MAY** be empty but present, and readers must gracefully handle these files being valid schematically but containing no rows.
+
+### Archive file order
+
+There is no required order of files in an mzPeak archive. As a matter of course the `mzpeak_index.json` will be the last file written to a ZIP archive. Some data files rely on information from other files, making reading the archive incrementally impractical at this time. File names within the archive **SHOULD** be unique, but in some unusual scenarios a ZIP archive may contain multiple files with the same name, in which case the last instance **SHOULD** be used.
+
+### Unpacked archives
+
+The same requirements apply to an unpacked archive. There is no "ordering" on the host file system. File systems versioning is not considered here, but it is usually preferrable to use the latest version of the files in the unpacked archive.
 
 ## Conformant archive
 
@@ -55,7 +63,17 @@ A conformant reader **MUST**:
 - parallel columns of an entity have equal length;
 - the sorting-rank-0 coordinate array is ascending;
 - every non-null foreign key resolves to an existing key/id;
-- chunks of an entity are ascending by `chunk_start` and non-overlapping.
+- chunks of an entity are ascending by `chunk_start` and non-overlapping;
+- within an entity, all `array_index` entries share one layout family — either every entry
+  is `point` or every entry is one of the `chunk_*` formats; the two **MUST NOT** be mixed;
+- time columns (for example `spectrum.time` and `wavelength_spectrum_time`) are expressed in
+  [minutes](http://purl.obolibrary.org/obo/UO_0000031);
+- each signal Parquet file carries a [page index](https://parquet.apache.org/docs/file-format/pageindex/);
+- `data_type`, `array_type`, and `unit` CURIEs in the array index descend from their required
+  CV parents (`MS:1000518`, `MS:1000513`, and a unit term respectively).
+
+The last four cannot be expressed in JSON Schema or the CvMapping rules, so a conformant
+validator **MUST** check them programmatically.
 
 ## Conformance classes
 

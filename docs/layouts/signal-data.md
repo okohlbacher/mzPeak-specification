@@ -89,7 +89,7 @@ formats. The available `buffer_format` values are:
 
 | `buffer_format` | Used by | Meaning |
 | :-- | :-- | :-- |
-| `point` | [point](point-layout.md) | The array is stored in the point layout. The point layout is all-or-nothing — **every** array must be `point`. |
+| `point` | [point](point-layout.md) | The array is stored in the point layout. The point layout is all-or-nothing — **every** array **MUST** be `point` (see [Conformance](../conformance.md#validation)). |
 | `chunk_values` | [chunked](chunked-layout.md) | The "main" axis values bounded between a chunk's start and end, encoded for better compressibility (in addition to Parquet's own encoding). |
 | `chunk_start` | [chunked](chunked-layout.md) | The starting value of the main axis for the chunk, inclusive. |
 | `chunk_end` | [chunked](chunked-layout.md) | The ending value of the main axis for the chunk, inclusive. It should be less than the next chunk's `chunk_start`. |
@@ -325,10 +325,11 @@ the array), then filling the null values with either a locally estimated value
 (when more than one value is available to estimate the median delta) or the
 regression model described above (for a single point).
 
-Unpaired `null` values **MAY** appear only as the first or last `null` in the
-array; any other unpaired `null` is an unrecoverable error. A run of three or
-more `null` values **MAY** be recoverable but should not occur under normal
-operation.
+Unpaired `null` values **MAY** appear only as the first or last `null` value in array;
+any other unpaired `null` is an unrecoverable error. A run of three or more `null`
+values **MAY** be recoverable but should not occur under normal operation. When using
+the chunked layout this applies to each chunk's value array as well, making each chunk
+independently decodable.
 
 The locally estimated value **SHOULD** be the second median of the spacing of the
 current segment's non-`null` values. The regression model predicts the spacing
@@ -419,8 +420,8 @@ from the single non-null value of a segment that has only one.
 Unless otherwise noted, readers **SHOULD** treat `null` values in the sorting-
 rank-0 array of an entry as governed by this model, with parallel `null` values
 in any intensity arrays read as `0`. The former should carry a `transform` of
-[`MS:1003901`](http://purl.obolibrary.org/obo/MS_1003901) and the latter a
-`transform` of [`MS:1003902`](http://purl.obolibrary.org/obo/MS_1003902). All
+[`MS:1003902`](http://purl.obolibrary.org/obo/MS_1003902) and the latter a
+`transform` of [`MS:1003901`](http://purl.obolibrary.org/obo/MS_1003901). All
 other values at those points are read as-is, with null semantics meaning the
 value was absent. Writers using null marking **SHOULD** use `null` only for the
 first sorting dimension and its associated intensity value; all other columns

@@ -22,18 +22,18 @@ see [Implementations](implementations.md).
   reasonable data types, and cross-file consistency (for example that the
   declared number of data points matches the signal table).
 
-## Viewers
+## Viewer
 
-- **mzPeak Explorer** — opens any `.mzpeak` file directly in the browser,
-  streamed over HTTP range requests with no download. Built on the
+- **mzPeak Viewer** — opens any `.mzpeak` file directly in the browser,
+  streamed over HTTP range requests with no download. Inspect spectra and
+  chromatograms for LC-/GC-MS runs, or render ion images and assign masses to
+  RGB channels to reconstruct tissue anatomy for mass-spectrometry imaging (MSI)
+  datasets. Built on the
   [TypeScript implementation](https://hupo-psi.github.io/mzpeakts/).
-- **mzPeakIV** — an imaging viewer for mass-spectrometry imaging (MSI) datasets.
-  It streams a `.mzpeak` file in place and can assign masses to RGB channels to
-  reconstruct tissue anatomy directly in the browser.
 
 ## Example data
 
-- **[Example data corpus ↗](https://object.storage.eu01.onstackit.cloud/v09/index.html)**
+- **[Example data corpus ↗](https://data.mzpeak.org/v09/index.html)**
   — a public, browsable set of real `.mzpeak` files converted from open datasets
   across vendors, instruments, and modalities (LC-/GC-MS, imaging MS, and studies
   shipping SDRF / ISA sample metadata), each alongside its original. Every file

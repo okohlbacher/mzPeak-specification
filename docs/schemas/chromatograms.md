@@ -39,72 +39,83 @@ unit is up to the writer. For consistency, we recommend using minutes.
 }
 ```
 
-This table uses the [packed parallel metadata table](../layouts/metadata-tables.md) schema.
-
-### `chromatogram` (group)
+This table uses the [metadata table](../layouts/metadata-tables.md) schema.
 
 - **`index`** (integer) — the ascending 0-based index, incrementing by 1 per
   entry and **SHOULD** be time-sorted ascending. Primary key for the
   `chromatogram` facet.
-- **`id`** (string) — a unique string identifier.
-- [**`MS_1000465_scan_polarity`**](http://purl.obolibrary.org/obo/MS_1000465)
+- **`id`** (string) — a unique string identifier. Unlike for spectra, there is no "nativeId" format definition for chromatograms at this time.
+- [**`scan_polarity (MS:1000465)`**](http://purl.obolibrary.org/obo/MS_1000465)
   (integer) — `1`, `-1`, or `null`.
-- [**`MS_1000626_chromatogram_type`**](http://purl.obolibrary.org/obo/MS_1000626)
+- [**`chromatogram_type (MS:1000626)`**](http://purl.obolibrary.org/obo/MS_1000626)
   (CURIE) — e.g. total ion current
   ([`MS:1000235`](http://purl.obolibrary.org/obo/MS_1000235)), selected ion
   current ([`MS:1000627`](http://purl.obolibrary.org/obo/MS_1000627)), base peak
   ([`MS:1000628`](http://purl.obolibrary.org/obo/MS_1000628)), absorption
-  ([`MS:1000812`](http://purl.obolibrary.org/obo/MS_1000812)).
-- **`data_processing_ref`** (string) — a `data_processing` governing this
-  chromatogram if it deviates from `run.default_data_processing_id`; `null`
-  otherwise.
+  ([`MS:1000812`](http://purl.obolibrary.org/obo/MS_1000812)),
+  or selected ion current ([`MS:1000627`](http://purl.obolibrary.org/obo/MS_1000627)).
+- **`data_processing_id`** (string) — the `id` of a `data_processing` that
+  governs this chromatogram if it deviates from the default in
+  `run.default_data_processing_id`; `null` otherwise. This applies data processing reflects how properties or attributes of the chromatogram are calculated. Data arrays
+  are governed by the data processing methods defined in the [array index](../layouts/signal-data.md#the-array-index)
 - **`parameters`** (list) — controlled or uncontrolled parameters; see
   [the parameters list](../layouts/metadata-tables.md#the-parameters-list).
-- **`number_of_auxiliary_arrays`** (integer) and **`auxiliary_arrays`** (list) —
+- **`number_of_auxiliary_arrays`** (integer) and **`auxiliary_arrays`** (list) ---
   see [auxiliary data arrays](../layouts/auxiliary-arrays.md).
-- [**`MS_1003060_number_of_data_points`**](http://purl.obolibrary.org/obo/MS_1003060)
+- [**`number_of_data_points (MS:1003060)`**](http://purl.obolibrary.org/obo/MS_1003060)
   (integer) — data points stored in `chromatograms_data.parquet`.
-- **MAY** supply a child of
-  [`MS:1000808`](http://purl.obolibrary.org/obo/MS_1000808) (chromatogram
-  attribute) one or more times.
+- **MAY** supply a child of [`MS:1000808`](http://purl.obolibrary.org/obo/MS_1000808) (chromatogram attribute)
+  one or more times.
+    - [`chromatogram_title (MS:1000809)`](http://purl.obolibrary.org/obo/MS_1000809)
+    - [`lowest_observed_mz (MS:1000528)`](http://purl.obolibrary.org/obo/MS_1000528)
+    - [`highest_observed_mz (MS:1000527)`](http://purl.obolibrary.org/obo/MS_1000527)
+    - [`lowest_observed_wavelength (MS:1000619)`](http://purl.obolibrary.org/obo/MS_1000619)
+    - [`highest_observed_wavelength (MS:1000618)`](http://purl.obolibrary.org/obo/MS_1000618)
+    - [`lowest_observed_ion_mobility (MS:1003437)`](http://purl.obolibrary.org/obo/MS_1003437)
+    - [`highest_observed_ion_mobility (MS:1003438)`](http://purl.obolibrary.org/obo/MS_1003438)
 
-### `precursor` (group)
+## Chromatogram precursor metadata — `chromatograms_metadata_precursors.parquet`
 
-The method of precursor-ion selection and activation. Outside of sequential, multiple or parallel reaction monitoring, this group will be unilaterally `null`.
+```json
+{
+  "name": "chromatograms_metadata_precursors.parquet",
+  "entity_type": "chromatogram",
+  "data_kind": "metadata"
+}
+```
 
-- **`source_index`** (integer) — the chromatogram this precursor belongs to
-  (foreign key).
-- **`precursor_index`** (integer) — the chromatogram the precursor was created
-  from (foreign key). See [spectra](spectra.md#precursor-group) for more details.
-- **`precursor_id`** (string) — the `id` of the chromatogram referenced by
-  `precursor_index`. See [spectra](spectra.md#precursor-group) for more details.
-- **`isolation_window`** (group) — as for
-  [spectra](spectra.md#precursor-group): **MUST** supply children of
-  [`MS:1000792`](http://purl.obolibrary.org/obo/MS_1000792).
-- **`activation`** (group) — as for [spectra](spectra.md#precursor-group):
-  **MUST** supply [`MS:1000044`](http://purl.obolibrary.org/obo/MS_1000044)
-  (dissociation method) or a child.
+The method of precursor-ion selection and activation. Outside of sequential, multiple or parallel reaction monitoring,
+this table will be empty or absent. Its schema is identical to the [spectrum precursor schema](./spectra.md#spectrum-precursor-metadata--spectra_metadata_precursorsparquet)
 
-### `selected_ion` (group)
 
-Like the `precursor` group, outside of sequential, multiple or parallel reaction monitoring, this group will be unilaterally `null`.
 
-- **`source_index`** (integer) / **`precursor_index`** (integer) — foreign keys.
-- **`ion_mobility_value`** (float) / **`ion_mobility_type`** (CURIE) — optional.
-- **`parameters`** (list) — controlled or uncontrolled parameters; see
-  [the parameters list](../layouts/metadata-tables.md#the-parameters-list).
-- **MUST** supply a child of
-  [`MS:1000455`](http://purl.obolibrary.org/obo/MS_1000455) (ion selection
-  attribute) one or more times — selected-ion m/z, charge state, intensity.
+## Chromatogram selected ion metadata — `chromatograms_metadata_selected_ions.parquet`
 
-### `product` (group)
+```json
+{
+  "name": "chromatograms_metadata_selected_ions.parquet",
+  "entity_type": "chromatogram",
+  "data_kind": "selected_ions"
+}
+```
 
-- **`source_index`** (integer) — the chromatogram this product belongs to
-  (foreign key).
-- **`product_index`** (integer) — the chromatogram the product was created
-  from (foreign key). See [spectra](spectra.md#precursor-group) for more details.
-- **`isolation_window`** (group) — as for
-  [spectra](spectra.md#precursor-group): **MUST** supply children of
-  [`MS:1000792`](http://purl.obolibrary.org/obo/MS_1000792).
-- **`parameters`** (list) — controlled or uncontrolled parameters; see
-  [the parameters list](../layouts/metadata-tables.md#the-parameters-list).
+This table uses the [metadata table](../layouts/metadata-tables.md) schema.
+
+Like the `precursor` group, outside of sequential, multiple or parallel reaction monitoring, this table will be empty
+or absent. Its schema is identical to the [spectrum selected ion schema](./spectra.md#spectrum-selected-ion-metadata--spectra_metadata_selected_ionsparquet).
+
+## Chromatogram product selection metadata — `chromatograms_metadata_products.parquet`
+
+```json
+{
+  "name": "chromatograms_metadata_products.parquet",
+  "entity_type": "chromatogram",
+  "data_kind": "products"
+}
+```
+
+This table uses the [metadata table](../layouts/metadata-tables.md) schema.
+
+When describing single reaction monitoring (SRM) or multiple reaction monitoring (MRM) experiments, each product ion is
+isolated separately with a different isolation window. This table is usually empty or absent. Its schema is identical to
+the [spectrum products schema](./spectra.md#spectrum-product-selection-metadata--spectra_metadata_productsparquet).

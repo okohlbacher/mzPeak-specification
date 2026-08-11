@@ -1,0 +1,21 @@
+# Overlay build config — serves the spec under https://www.mzpeak.org/spec/.
+#
+# The canonical HUPO-PSI build keeps using mkdocs.yml (site_url =
+# hupo-psi.github.io). This overlay inherits everything and changes only:
+#   - site_url  → the /spec/ path on the custom domain (fixes canonical URLs,
+#     sitemap, and the OG preview-image base in overrides/main.html)
+#   - extra.mzpeak_org_embed → turns on the "← mzpeak.org" back-link banner
+#     (inert in the canonical build, where the flag is absent)
+#
+# Build:  mkdocs build -f mkdocs.mzpeak-org.yml -d <out>/spec --strict
+INHERIT: mkdocs.yml
+site_url: https://www.mzpeak.org/spec/
+# Embedded under the all-light mzpeak.org site: drop the dark-mode toggle so /spec
+# is light-only and matches the marketing site (replaces the inherited 2-entry palette).
+theme:
+  palette:
+    - scheme: default
+      primary: white
+      accent: indigo
+extra:
+  mzpeak_org_embed: true
