@@ -367,7 +367,7 @@ When writing, if an array with a sorting rank is unsorted, the entry's data arra
 
 ### The Array Index
 
-In order to properly annotate what kind of array a column _is_, we include a JSON-serialized `array index` in the [Parquet key-value metadata](#the-metadata-key-value-pairs), an list of data structures that describe each array in controlled vocabulary. A column is part of the Parquet file's schema and must always exist and have a homogenous type of value or a be marked `null` for each row. The `array index` is stored in the Parquet metadata for the [`data arrays`](#data-kind) or [`peaks`](#data-kind) files under `<entity_type>_array_index`, e.g. `spectrum_array_index` for spectra or `chromatogram_array_index`.
+In order to properly annotate what kind of array a column _is_, we include a JSON-serialized `array index` in the [Parquet key-value metadata](#the-metadata-key-value-pairs), an list of data structures that describe each array in controlled vocabulary. A column is part of the Parquet file's schema and must always exist and have a homogenous type of value or a be marked `null` for each row. The `array index` is stored in the Parquet metadata for the [`data_arrays`](#data-kind) or [`peaks`](#data-kind) files under `<entity_type>_array_index`, e.g. `spectrum_array_index` for spectra or `chromatogram_array_index`.
 
 ```json
 {
@@ -1160,7 +1160,7 @@ TODO: Add wavelength files to examples
     {
       "name": "spectra_data.parquet",
       "entity_type": "spectrum",
-      "data_kind": "data arrays"
+      "data_kind": "data_arrays"
     },
     {
       "name": "spectra_metadata.parquet",
@@ -1170,7 +1170,7 @@ TODO: Add wavelength files to examples
     {
       "name": "chromatograms_data.parquet",
       "entity_type": "chromatogram",
-      "data_kind": "data arrays"
+      "data_kind": "data_arrays"
     },
     {
       "name": "chromatograms_metadata.parquet",
@@ -1216,9 +1216,9 @@ The `data_kind` field tells the reader the semantics of the data stored in this 
 
 There are currently 5 controlled values for `data_kind`:
 
-- `data arrays`: Expected to use one of the [point](#point-layout) or [chunked](#chunked-layout) layout. These files contain the signal data, usually in its "raw" form, for the `entity_type` being described.
-- `peaks`: This, like `data arrays`, is expected to use the [point](#point-layout) or [chunked](#chunked-layout) layout as well. Where `data arrays` might store any kind of signal data, `peaks` implies that the data are processed and that there exists an entry in `data arrays` that is less refined. This is useful when storing both profile and centroid signal for a spectrum, for example.
-- `metadata`: Expected to use the [packed parallel table](#packed-parallel-metadata-tables) layout. This describes the entity's metadata, everything but the homogenous signal arrays stored in the `data arrays` file. This file may still be large.
+- `data_arrays`: Expected to use one of the [point](#point-layout) or [chunked](#chunked-layout) layout. These files contain the signal data, usually in its "raw" form, for the `entity_type` being described.
+- `peaks`: This, like `data_arrays`, is expected to use the [point](#point-layout) or [chunked](#chunked-layout) layout as well. Where `data_arrays` might store any kind of signal data, `peaks` implies that the data are processed and that there exists an entry in `data_arrays` that is less refined. This is useful when storing both profile and centroid signal for a spectrum, for example.
+- `metadata`: Expected to use the [packed parallel table](#packed-parallel-metadata-tables) layout. This describes the entity's metadata, everything but the homogenous signal arrays stored in the `data_arrays` file. This file may still be large.
 - `proprietary`: The layout and schema of this file is entirely the purview of the writer which may be an instrument vendor. These files should be ignored unless the reader _is_ for that instrument vendor. It may not be a Parquet file. Instrument vendors are encouraged to use this classification on binary files or other difficult to digest contents. Text or XML configuratin files may still be of interest to the broader community in an evolving metadata landscape.
 - `other`: The file is none of the other listed types. This may not be a Parquet file.
 
@@ -1240,7 +1240,7 @@ There are currently 3 controlled values for `entity_type`
 
 - `spectrum`: The file describes mass spectra, entities defined as occuring at a singular point in time, or as semantically close to this as possible in the face of framed or cycled acquisition, with a mass-related unit like m/z or neutral mass as the coordinate of measure.
 - `chromatogram`: The file describes chromatograms or other measurements _over time_ like diagnostic traces. QUESTION: should these be called "traces" instead?
-- `wavelength spectrum`: Similar to `spectrum`, except that the unit of measure is an electromagnetic wavelength measurement. There is substantially more heterogeneity in the types of analyzers that measure wavelengths compared to mass analyzers. Additionally, time series may be constructed around wavelengths but stored as `chromatogram` entries.
+- `wavelength_spectrum`: Similar to `spectrum`, except that the unit of measure is an electromagnetic wavelength measurement. There is substantially more heterogeneity in the types of analyzers that measure wavelengths compared to mass analyzers. Additionally, time series may be constructed around wavelengths but stored as `chromatogram` entries.
 - `other`: The file is none of the other listed types. This may describe something not yet covered by the living specification.
 
 Any value outside of these is assumed to be treated as `other`.
@@ -1257,7 +1257,7 @@ TODO: Expand this
 {
   "name": "spectra_data.parquet",
   "entity_type": "spectrum",
-  "data_kind": "data arrays"
+  "data_kind": "data_arrays"
 }
 ```
 
@@ -1389,7 +1389,7 @@ QUESTION: Is there a better way to make ion mobility storage generic over type (
 {
   "name": "chromatograms_data.parquet",
   "entity_type": "chromatogram",
-  "data_kind": "data arrays"
+  "data_kind": "data_arrays"
 }
 ```
 
@@ -1466,8 +1466,8 @@ When selecting a [Parquet encoding](https://parquet.apache.org/docs/file-format/
 ```json
 {
   "name": "wavelength_spectra_data.parquet",
-  "entity_type": "wavelength spectrum",
-  "data_kind": "data arrays"
+  "entity_type": "wavelength_spectrum",
+  "data_kind": "data_arrays"
 }
 ```
 
@@ -1482,7 +1482,7 @@ When using [null marking](#null-marking), follow the [null semantics for signal 
 ```json
 {
   "name": "wavelength_spectra_metadata.parquet",
-  "entity_type": "wavelength spectrum",
+  "entity_type": "wavelength_spectrum",
   "data_kind": "metadata"
 }
 ```

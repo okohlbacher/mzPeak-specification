@@ -26,7 +26,7 @@ Spectra are described by up to three files: a **signal** file
 {
   "name": "spectra_data.parquet",
   "entity_type": "spectrum",
-  "data_kind": "data arrays"
+  "data_kind": "data_arrays"
 }
 ```
 
