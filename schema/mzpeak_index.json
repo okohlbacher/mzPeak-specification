@@ -71,6 +71,7 @@
             "proprietary",
             "wavelength_spectrum"
           ],
+          "$comment": "Controlled values are spelled with underscores, not spaces: `wavelength_spectrum`. A reader encountering a value outside the controlled list treats it as `other`, so this is intentionally not a closed `enum`.",
           "description": "The things being described in one facet or another by this file"
         },
         "data_kind": {
@@ -79,9 +80,14 @@
             "data_arrays",
             "metadata",
             "peaks",
+            "scans",
+            "precursors",
+            "selected_ions",
+            "products",
             "other",
             "proprietary"
           ],
+          "$comment": "Controlled values are spelled with underscores, not spaces: `data_arrays`, `selected_ions`. A reader encountering a value outside the controlled list treats it as `other`, so this is intentionally not a closed `enum`.",
           "description": "The facet of the thing being described in this file"
         },
         "column_mapping": {
@@ -101,6 +107,7 @@
     "column_mapping": {
       "type": "object",
       "description": "A mapping from a Parquet column to a controlled vocabulary term",
+      "required": ["name", "path"],
       "properties": {
         "name": {
           "type": "string",
@@ -121,6 +128,8 @@
         "accession": {
           "type": ["string", "null"],
           "description": "The CURIE for the controlled vocabulary term, or null if no controlled vocabulary term is available. Null may be used to indicate that a column has a human readable name but does not map to a controlled vocabulary term",
+          "pattern": "\\S+:\\S+",
+          "format": "curie",
           "default": null
         },
         "unit": {

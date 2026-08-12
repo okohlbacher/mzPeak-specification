@@ -12,8 +12,8 @@ archive.
 ```json
 {
   "name": "wavelength_spectra_data.parquet",
-  "entity_type": "wavelength spectrum",
-  "data_kind": "data arrays"
+  "entity_type": "wavelength_spectrum",
+  "data_kind": "data_arrays"
 }
 ```
 
@@ -35,7 +35,7 @@ carefully for profile data.
 ```json
 {
   "name": "wavelength_spectra_metadata.parquet",
-  "entity_type": "wavelength spectrum",
+  "entity_type": "wavelength_spectrum",
   "data_kind": "metadata"
 }
 ```

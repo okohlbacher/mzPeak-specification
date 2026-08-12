@@ -11,7 +11,7 @@ currently carried here as well, pending their
 {
   "name": "chromatograms_data.parquet",
   "entity_type": "chromatogram",
-  "data_kind": "data arrays"
+  "data_kind": "data_arrays"
 }
 ```
 
