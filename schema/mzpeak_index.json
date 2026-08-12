@@ -107,6 +107,7 @@
     "column_mapping": {
       "type": "object",
       "description": "A mapping from a Parquet column to a controlled vocabulary term",
+      "required": ["name", "path"],
       "properties": {
         "name": {
           "type": "string",
@@ -127,6 +128,8 @@
         "accession": {
           "type": ["string", "null"],
           "description": "The CURIE for the controlled vocabulary term, or null if no controlled vocabulary term is available. Null may be used to indicate that a column has a human readable name but does not map to a controlled vocabulary term",
+          "pattern": "\\S+:\\S+",
+          "format": "curie",
           "default": null
         },
         "unit": {
