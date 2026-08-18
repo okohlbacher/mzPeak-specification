@@ -135,6 +135,11 @@
         "unit": {
           "type": ["string", "null"],
           "default": null
+        },
+        "term_marker": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether this column is marks the presence/absence of a specific value-less controlled vocabulary term, true when the term is present in the row, false or null otherwise."
         }
       }
     }

@@ -71,13 +71,13 @@ metadata. mzPeak uses CV terms in three ways:
       holds CURIEs for a child term — [`MS:1000127`](http://purl.obolibrary.org/obo/MS_1000127) "centroid spectrum"
       or [`MS:1000128`](http://purl.obolibrary.org/obo/MS_1000128) "profile spectrum" — as appropriate for the spectrum
       in that row. If the CURIE is `null`, then no value is added for that term.
-    - QUESTION: If multiple instances of a particular parent term are needed to describe the same row, e.g.
-      [`dissociation method` (MS:1000044)](http://purl.obolibrary.org/obo/MS_1000044) being used to express
-      [`electron transfer dissociation` (MS:1000598)](http://purl.obolibrary.org/obo/MS_1000598) but also
+    - If multiple instances of a particular parent term with `has_value_type` are needed to describe the
+      same row, e.g. [`dissociation method` (MS:1000044)](http://purl.obolibrary.org/obo/MS_1000044) being used to
+      express [`electron transfer dissociation` (MS:1000598)](http://purl.obolibrary.org/obo/MS_1000598) but also
       [`supplemental collision-induced dissociation` (MS:1002679)](http://purl.obolibrary.org/obo/MS_1002679),
-      a column mapped to the term itself may have its own CURIE value, a child term's CURIE value, or `null`
-      to indicate it is present or not without resorting to storing the supplemental dissociation method in the
-      `parameters` list.
+      a column mapped to the term itself may have a boolean value where `true` indices the presence of the value-less
+      term and `false` or `null` indicate its absence instead of storing the second occurrence in the `parameters` list.
+      These [column mappings](#column-mapping) **MUST** set `term_marker` to `true`.
     - The column [`ms_level (MS:1000511)`](http://purl.obolibrary.org/obo/MS_1000511)
       holds an integer value.
 1. **As structural elements.** In several places — such as the
@@ -118,9 +118,8 @@ parameter can take exactly one of these value types; unused slots **MUST** be
 parameter may be stored simply by leaving `parameters.list.item.accession` empty.
 
 !!! note "Naming and column promotion"
-    - Parquet columns **MUST** be uniquely named, so if a parameter appears more
-      than once in a single row it **MUST** be stored in the `parameters`
-      column.
+    - Parquet columns **MUST** be uniquely named, so if the same parameter appears more
+      than once in a single row it **MUST** be stored in the `parameters` column.
     - Writers **SHOULD** to promote parameters that are present with zero or one times per row
       to *columns* unless there is ambiguity or insufficient context. This is more space-efficient
       and enables predicate filtering. Examples where ambiguity might prevent promotion:
@@ -195,6 +194,12 @@ Here are two `scans` table column mappings (JSON)
   "path": "scan_windows.scan_window_lower_limit",
   "accession": "MS:1000501",
   "unit": "MS:1000040"
+},
+{
+  "name": "supplemental collisional dissociation",
+  "path": "activation.opt_supplemental_collisional_dissociation",
+  "accession": "MS:1002679",
+  "term_marker": true
 }
 ```
 
