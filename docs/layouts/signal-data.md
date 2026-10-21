@@ -25,23 +25,29 @@ other values are arranged — *sorting rank 0*. Any arrays that are shorter or
 longer than this axis **SHOULD** be stored as auxiliary arrays instead.
 
 !!! warning "Re-sort unsorted ranked arrays"
-    When writing, if an array that has a sorting rank is not sorted, the entry's
-    data arrays **MUST** be re-sorted accordingly. Failing to do so introduces
-    integrity errors.
+    When writing, if an array that has a sorting rank is not sorted with respect to its rank,
+    the entry's data arrays **MUST** be re-sorted accordingly. Failing to do so introduces
+    integrity errors. This often occurs with ion mobility-mass spectrometry data.
+
+    To sort along multiple dimensions, the writer **SHOULD** first arrange dimensions by ascending
+    sorting rank, then proceed to sort by the lowest rank dimension, and break ties in rank *i* with
+    rank *i+1*, until no ties remain or there are no higher sorting ranks. If no higher sorting ranks
+    are available to break ties, then all orderings of tied coordinates are equally valid.
 
 ## The Array Index
 
-To annotate what kind of array a column *is*, mzPeak stores a JSON-serialised
+To annotate what kind of array a column *is*, mzPeak stores a JSON-serialized
 **array index** in the [Parquet key–value metadata](../foundations/parquet.md#the-metadata-keyvalue-pairs).
 It is a list of structures describing each array using controlled vocabulary. A
 column is part of the Parquet schema and must always exist with a homogeneous
 value type (or be `null`) for each row.
 
 The array index is stored in the Parquet metadata of the
-[`data arrays`](../archive/data-kinds.md) or
-[`peaks`](../archive/data-kinds.md) files under
+[`data_arrays`](../archive/data-kinds.md) or [`peaks`](../archive/data-kinds.md) files under
 `<entity_type>_array_index` — e.g. `spectrum_array_index` for spectra or
-`chromatogram_array_index` for chromatograms.
+`chromatogram_array_index` for chromatograms, and `wavelength_spectrum` for UV-viz wavelength
+spectra. The same key name construction is used for all signal data layouts regardless of
+`data_kind`.
 
 ```json
 {
@@ -92,20 +98,23 @@ formats. The available `buffer_format` values are:
 | `point` | [point](point-layout.md) | The array is stored in the point layout. The point layout is all-or-nothing — **every** array **MUST** be `point` (see [Conformance](../conformance.md#validation)). |
 | `chunk_values` | [chunked](chunked-layout.md) | The "main" axis values bounded between a chunk's start and end, encoded for better compressibility (in addition to Parquet's own encoding). |
 | `chunk_start` | [chunked](chunked-layout.md) | The starting value of the main axis for the chunk, inclusive. |
-| `chunk_end` | [chunked](chunked-layout.md) | The ending value of the main axis for the chunk, inclusive. It should be less than the next chunk's `chunk_start`. |
+| `chunk_end` | [chunked](chunked-layout.md) | The ending value of the main axis for the chunk, exclusive. It should be less than or equal to the next chunk's `chunk_start`. |
 | `chunk_encoding` | [chunked](chunked-layout.md) | A CURIE indicating how `chunk_values` was encoded. |
 | `chunk_secondary` | [chunked](chunked-layout.md) | Values of an array other than the main axis for the chunk. |
 | `chunk_transform` | [chunked](chunked-layout.md) | Raw bytes of an array in the chunk that was opaquely transformed (e.g. with MS-Numpress). May appear *in addition* to a referenced `chunk_values` or `chunk_secondary` column. |
 
 The chunked layout currently supports a single chunking dimension. A file in the
-chunked layout **MUST** use `chunk_start`, `chunk_end`, `chunk_encoding`, and
-`chunk_values` *exactly once* each.
+chunked layout **MUST** include a `chunk_start`, `chunk_end`, `chunk_encoding`, and
+`chunk_values` column *exactly once* each. This applies even if the `chunk_values` column
+is empty due to an opaque transform like MS-Numpress linear encoding being applied. The
+array index entries for the `chunk_start`, `chunk_end`, and `chunk_encoding` copy all fields
+from `chunk_values` *except* `path`, `transform` and `buffer_format`.
 
 ### Buffer priority and naming
 
 In Parquet, all column names and types must be known before writing, and no two
 columns may share the same name and path. Normally there is one coordinate
-column (e.g. m/z or time) and one intensity column. If you have intensity arrays
+column (e.g. m/z or time) and one intensity column. If there are intensity arrays
 with different units or data types, they must be defined as separate arrays in
 the array index and therefore have distinct names. While uncommon for spectra,
 this is unavoidable for [diagnostic traces](../archive/entity-types.md) stored as
@@ -143,14 +152,13 @@ Parquet can write [page indices](https://parquet.apache.org/docs/file-format/pag
 on any *leaf* column, based on the value being stored *before* its
 [encoding](https://parquet.apache.org/docs/file-format/data-pages/encodings/) and
 [compression](https://parquet.apache.org/docs/file-format/data-pages/compression/).
-This means we must take care when storing data cleverly: a transformation that
-obscures the stored value from the page index also disables predicate filtering
-on it. The techniques below are written in terms of spectra but apply more
-broadly.
+This means a transformation that obscures the stored value from the page index
+also disables predicate filtering on it. The techniques below are written in terms
+of spectra but apply more broadly.
 
 ### Numerical precision
 
-There are no strict rules about which *physical* data types must be used for particular data arrays. Similar logic to that described in the [metadata tables section](metadata-tables.md#typing-parameter-values) should be applied here. For instance, that m/z arrays may be 32-bit floats or 64-bit doubles at the discretion of the writer. Some instrument vendors do not even export 64-bit precision values, defeating the purpose of storing them at 64-bit precision. If you use [delta encoding](./chunked-layout.md#delta-encoding), 64-bit doubles **SHOULD** still be used for accurate reconstruction. Likewise, intensity arrays may be 32-bit float, 64-bit double, or even 32-bit integers! It is the writer's prerogotive to choose how to most compactly store their data. Since all data are stored in Parquet, all physical values are stored according to their encoding as described in [here](https://parquet.apache.org/docs/file-format/data-pages/encodings/), which is little endian in all cases.
+There are no strict rules about which *physical* data types must be used for particular data arrays. Similar logic to that described in the [metadata tables section](metadata-tables.md#typing-parameter-values) should be applied here. For instance, that m/z arrays may be 32-bit floats or 64-bit doubles at the discretion of the writer. Some instrument vendors do not even export 64-bit precision values, defeating the purpose of storing them at 64-bit precision. If you use [delta encoding](./chunked-layout.md#delta-encoding), 64-bit doubles **SHOULD** still be used for accurate reconstruction. Likewise, intensity arrays may be 32-bit float, 64-bit double, or even 32-bit integers. The writer **SHOULD** choose how to most compactly store their data. Since all data are stored in Parquet, all physical values are stored according to their encoding as described in [here](https://parquet.apache.org/docs/file-format/data-pages/encodings/), which is little endian in all cases.
 
 Opting for lossy compression like MS-Numpress carries its own precision costs. See [(4)](../reference/references.md) for more details.
 
@@ -160,7 +168,13 @@ Some vendors produce profile arrays with large "empty" regions of zero-intensity
 points along a semi-regular m/z axis. These regions hold little information, so
 all but the first and last zero-intensity points of a run are removed. This is
 only meaningful for profile data. Readers **SHOULD** assume that zero runs have
-been stripped. Writers **MAY** strip zero runs, it is recommended but not required.
+been stripped. Writers **MAY** strip zero runs, it is recommended but not
+required. Zero run stripping is not marked by a transform term. Most run formats
+do not store zero runs and might only produce them at read time if requested.
+Readers are **NOT** required to do so, though they may use either the coordinate
+spacing model stored in [`polynomial_delta_coordinate_interpolation`] derived in the
+[Null marking](#null-marking) section or the grid model if the [grid encoding](chunked-layout.md#grid-encoding)
+is provided in the chunked layout.
 
 A *zero run* is a sequence of three or more zero values, reduced to just its
 first and last positions. Zero runs can be very long and, outside of scenarios
@@ -220,24 +234,24 @@ $$
 
 ??? example "Python — fitting the weighted least-squares spacing model"
     ```python
-    class DeltaCurveRegressionModel:
-        beta: np.ndarray
+    import numpy as np
+    from numpy import typing as npt
+    from scipy.linalg import solve_triangular
 
-        def __init__(self, beta: np.ndarray):
+    class DeltaCurveRegressionModel:
+        beta: npt.NDArray
+
+        def __init__(self, beta: npt.NDArray):
             self.beta = beta
 
         @classmethod
-        def fit(cls, mz_array, delta_array, weights=None, threshold=None, rank=2):
+        def fit(cls, mz_array: npt.NDArray, delta_array: npt.NDArray, weights: npt.NDArray | None = None, rank: int=2):
             if weights is None:
                 weights = np.ones(len(mz_array))
 
-            if threshold is None:
-                threshold = 1.0
-
-            # Drop all entries where the gap between m/z values > threshold
-            raw = mz_array[1:][delta_array <= threshold]
-            w = weights[1:][delta_array <= threshold]
-            y = delta_array[delta_array <= threshold]
+            raw = mz_array[1:]
+            w = weights[1:]
+            y = delta_array
 
             # Build the design matrix
             data = [np.ones_like(raw)]
@@ -272,12 +286,7 @@ only three points — including the two zero-intensity flanks — no meaningful 
 model can be fit anyway, so the minuscule angle change is effectively lossless.
 
 The model parameters learned for each entry **MUST** be stored in that entry's
-row in the associated metadata table, as `mz_delta_model`.
-
-!!! question "Open item — generalise `mz_delta_model`"
-    Should `mz_delta_model` become a CV parameter and be dissociated from m/z
-    specifically, so the same mechanism can serve other coordinate axes? This is
-    likely desirable.
+row in the associated metadata table, as `polynomial_delta_coordinate_interpolation`.
 
 <div class="mzp-figure" markdown>
 ![Reconstruction-error plot for a Thermo dataset: m/z deviation after null marking is negligible across the mass range.](../assets/img/thermo_null_marking_err.png)
@@ -298,6 +307,11 @@ equivalent to how a Parquet column chunk would represent them.
 
 ??? example "Python — masking positions that are two zeros in a row"
     ```python
+    from collections.abc import Sequence
+    from numbers import Number
+    import numpy as np
+    from numpy import typing as npt
+
     def is_zero_pair_mask(data: Sequence[Number]) -> "np.typing.NDArray[np.bool_]":
         '''Create a boolean mask for positions composed of two zeroes in a row.'''
         n = len(data)
@@ -337,6 +351,12 @@ from the single non-null value of a segment that has only one.
 
 ??? example "Python — filling *null*-marked values"
     ```python
+    from collections.abc import Sequence
+    from numbers import Number
+    import numpy as np
+    from numpy import typing as npt
+    import pyarrow as pa
+
     def find_pairs(mask: Sequence[bool]) -> Sequence[int]:
         """
         Construct index ranges between pairs of ``True`` values in ``mask``.
@@ -366,7 +386,7 @@ from the single non-null value of a segment that has only one.
         return indices
 
 
-    def estimate_median_delta(data: Sequence[Number]) -> tuple[Number, np.typing.NDArray]:
+    def estimate_median_delta(data: Sequence[Number]) -> tuple[Number, npt.NDArray]:
         """Find the 2nd median of ``np.diff(data)`` — a crude spacing estimate."""
         deltas = np.diff(data)
         median = np.median(deltas)
@@ -375,14 +395,8 @@ from the single non-null value of a segment that has only one.
         return median, deltas_below
 
 
-    def fill_nulls(data: pa.Array, common_delta: DeltaModelBase) -> "np.typing.NDArray":
-        """Fill ``null`` values using ``common_delta`` or a locally estimated median delta."""
-        if not isinstance(common_delta, DeltaModelBase):
-            if isinstance(common_delta, Number):
-                common_delta = ConstantDeltaModel(common_delta)
-            else:
-                common_delta = DeltaCurveRegressionModel(np.asarray(common_delta))
-
+    def fill_nulls(data: pa.Array, common_spacing: DeltaCurveRegressionModel) -> npt.NDArray:
+        """Fill ``null`` values using ``common_spacing`` or a locally estimated median delta."""
         pair_indices = find_pairs(data.is_null())
 
         chunks = []
@@ -395,15 +409,15 @@ from the single non-null value of a segment that has only one.
                 # A singleton point with one or two sides to pad
                 if n == 2:
                     if np.isnan(chunk[0]):
-                        chunk[0] = chunk[1] - common_delta(chunk[1])
+                        chunk[0] = chunk[1] - common_spacing.predict(chunk[1])
                     else:
-                        chunk[1] = chunk[0] + common_delta(chunk[0])
+                        chunk[1] = chunk[0] + common_spacing.predict(chunk[0])
                 elif n == 3:
-                    dx = common_delta(chunk[1])
+                    dx = common_spacing.predict(chunk[1])
                     chunk[0] = chunk[1] - dx
                     chunk[2] = chunk[1] + dx
                 else:
-                    raise Exception()
+                    raise Exception(f'Invalid singleton chunk: {chunk}')
             else:
                 # A run of values — estimate a more accurate delta from the data
                 dx, _ = estimate_median_delta(has_real)
@@ -419,29 +433,23 @@ from the single non-null value of a segment that has only one.
 
 Unless otherwise noted, readers **SHOULD** treat `null` values in the sorting-
 rank-0 array of an entry as governed by this model, with parallel `null` values
-in any intensity arrays read as `0`. The former should carry a `transform` of
-[`MS:1003902`](http://purl.obolibrary.org/obo/MS_1003902) and the latter a
-`transform` of [`MS:1003901`](http://purl.obolibrary.org/obo/MS_1003901). All
-other values at those points are read as-is, with null semantics meaning the
+in any intensity arrays read as `0`. The sorting array, e.g. m/z array, should carry a `transform` of
+[`MS:1003902|zero intensity point trimming interpolation`](http://purl.obolibrary.org/obo/MS_1003902)
+and the intensity array should carry a `transform` of [`MS:1003901|zero intensity point trimming`](http://purl.obolibrary.org/obo/MS_1003901).
+All other values at those points are read as-is, with null semantics meaning the
 value was absent. Writers using null marking **SHOULD** use `null` only for the
 first sorting dimension and its associated intensity value; all other columns
 should be written as-is.
 
-## Why a top-level node?
+## Zero Stripping Null Marking Encoding Quick Reference
 
-**Couldn't we just unwrap the top-level `point`/`chunk` struct and move on?**
+<figure class="mzp-figure wide">
+<img src="../../assets/img/null_marking_encoding.svg" />
+</figure>
 
-Perhaps, but keeping a top-level node open three doors:
 
-1. **Clear schema signalling.** When you see `point` at the root of the schema
-   you know this is a [point-layout](point-layout.md) file, not a
-   [chunked-layout](chunked-layout.md) one.
-2. **Unaligned proprietary data.** A specialised writer or reader might embed
-   information not directly connected to the primary schema's addressable unit
-   (a spectrum, a data point). The top-level node leaves a place for that.
-3. **Future table packing.** Early in mzPeak's design we tried to pack tables
-   together as much as possible (as in the
-   [packed parallel tables](metadata-tables.md) layout), but that proved very
-   inefficient to *write* despite being no slower to *read* — possibly an
-   implementation detail rather than a Parquet limitation. Keeping a top-level
-   node leaves the door open to revisit this without a schema-breaking change.
+## Null Marking Decoding Quick Reference
+
+<figure class="mzp-figure wide">
+<img src="../../assets/img/null_marking_decoding.svg" />
+</figure>

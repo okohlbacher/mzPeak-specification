@@ -1,10 +1,12 @@
+<!-- Automatically generated from schema\scan_settings_list.json ->
+
 # mzPeak metadata scan settings list
 
 The list of scan settings pre-configuring acquisition settings. Analogous to <https://peptideatlas.org/tmp/mzML1.1.0.html#scanSettingsList.>
 
 ## Use cases
 
-This is used primarily used for high-level configuration of data-independent acquisition strategies like targeted MS, SWATH, and the like. Additionally used for imaging MS to define the spatial scanning parameters.
+This is primarily used for high-level configuration of data-independent acquisition strategies like targeted MS, SWATH, and the like. Additionally used for imaging MS to define the spatial scanning parameters.
 
 ### Targeted MS
 
@@ -100,7 +102,7 @@ Description of the acquisition settings of the instrument prior to the start of 
 | `id` | `string` | Yes | The unique identifier for this scan settings configuration |
 | `source_file_references` | `array` of `string` | &nbsp; | &nbsp; |
 | `targets` | `array` of [`target`](#target) | &nbsp; | A list of targeted ions or intervals on an inclusion list. |
-| `parameters` | `array` of [`param`](/mzPeak-specification/archive/param) | Yes | Additional parameters describing the scan settings. |
+| `parameters` | `array` of [`param`](param.md) | Yes | Additional parameters describing the scan settings. |
 
 #### Property Details
 
@@ -114,7 +116,7 @@ The unique identifier for this scan settings configuration
 
 A list of targeted ions or intervals on an inclusion list.
 
-**`parameters`** - `array` of [`param`](/mzPeak-specification/archive/param) *(required)*
+**`parameters`** - `array` of [`param`](param.md) *(required)*
 
 Additional parameters describing the scan settings.
 
@@ -129,11 +131,11 @@ Additional parameters describing the scan settings.
 
 | Property | Type | Required | Description |
 |----------|------|:--------:|-------------|
-| `parameters` | `array` of [`param`](/mzPeak-specification/archive/param) | Yes | Additional parameters describing this target |
+| `parameters` | `array` of [`param`](param.md) | Yes | Additional parameters describing this target |
 
 #### Property Details
 
-**`parameters`** - `array` of [`param`](/mzPeak-specification/archive/param) *(required)*
+**`parameters`** - `array` of [`param`](param.md) *(required)*
 
 Additional parameters describing this target
 

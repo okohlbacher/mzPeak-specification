@@ -1,3 +1,5 @@
+<!-- Automatically generated from schema\data_processing.json ->
+
 # mzPeak metadata data processing method list
 
 Describe the JSON format of data processing method list
@@ -109,7 +111,7 @@ Describes a single step of data processing.
 |----------|------|:--------:|-------------|
 | `order` | `integer` | &nbsp; | The order in which the step is applied in the data processing pipeline. |
 | `software_reference` | `string` | &nbsp; | The identifier for a software entry that performed this operation. |
-| `parameters` | `array` of [`param`](/mzPeak-specification/archive/param) | &nbsp; | Additional parameters describing this data processing step denoting actions, parameters, and other descriptors. |
+| `parameters` | `array` of [`param`](param.md) | &nbsp; | Additional parameters describing this data processing step denoting actions, parameters, and other descriptors. |
 
 #### Property Details
 
@@ -121,7 +123,7 @@ The order in which the step is applied in the data processing pipeline.
 
 The identifier for a software entry that performed this operation.
 
-**`parameters`** - `array` of [`param`](/mzPeak-specification/archive/param) *(optional)*
+**`parameters`** - `array` of [`param`](param.md) *(optional)*
 
 Additional parameters describing this data processing step denoting actions, parameters, and other descriptors.
 

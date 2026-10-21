@@ -10,7 +10,7 @@ the main axis and the source index. The top-level schema node is named `chunk`,
 and the entity index column **MUST** be its first column.
 
 <div class="mzp-figure" markdown>
-<img src="../../assets/img/chunked_layout.png" alt="Chunked-layout schema: a top-level chunk group holding spectrum_index, mz_chunk_start and mz_chunk_end bounds, an encoded mz_chunk_values list, a chunk_encoding column, and an intensity list, with one table row per chunk." height="520"/>
+<img src="../../assets/img/chunked_layout.svg" alt="Chunked-layout schema: a top-level chunk group holding spectrum_index, mz_chunk_start and mz_chunk_end bounds, an encoded mz_chunk_values list, a chunk_encoding column, and an intensity list, with one table row per chunk." height="520"/>
 </div>
 
 <table class="chunk-table" markdown="0">
@@ -40,12 +40,12 @@ so they can be byte-shuffled for further compression.
 
 ## Column naming rules
 
-1. **`<entity>_index`** (integer) — the index key for the entity this chunk
+1. **`<entity_type>_index`** (integer) — the index key for the entity this chunk
    belongs to.
 2. **`<array_name>_chunk_start`** (float64) — the first coordinate value in the
    chunk, inclusive. Its array-index `buffer_format` **MUST** be `chunk_start`.
 3. **`<array_name>_chunk_end`** (float64) — the last coordinate value in the
-   chunk, inclusive. Its array-index `buffer_format` **MUST** be `chunk_end`.
+   chunk, exclusive. Its array-index `buffer_format` **MUST** be `chunk_end`.
 4. **`<array_name>_chunk_values`** (list) — the encoded coordinates from
    `array_name` according to `chunk_encoding`. Its array-index `buffer_format`
    **MUST** be `chunk_values`.
@@ -56,6 +56,13 @@ so they can be byte-shuffled for further compression.
 All other columns are expected to be `list` arrays whose names are simply their
 `array_name` (with `buffer_format` `chunk_secondary`), or surrogate arrays with
 `buffer_format` `chunk_transform`.
+
+## Parallel time index
+
+In addition to the `<entity_type>_index` column, the writer *MAY* include a parallel
+`<entity_type>_time` column which **MUST** store the [scan start time](http://purl.obolibrary.org/obo/MS_1000016)
+associated with that entity, stored as a scalar float64. This applies naturally to mass spectra, but is redundant
+for chromatograms or traces. This column is not part of the array index.
 
 ## Splitting data into chunks
 
@@ -220,7 +227,7 @@ This uses the MS-Numpress linear-prediction method
 ([10.1074/mcp.O114.037879](https://www.mcponline.org/article/S1535-9476(20)33083-8/fulltext))
 to compress the chunk values as raw bytes. Numpress produces a buffer of an
 8-byte fixed point, a 4-byte value 0, a 4-byte value 1, and then 2-byte residuals
-for all subsequent values. The array is therefore, by definition, not alignable
+for all subsequent values. The array is therefore, by definition, not align-able
 to a 4- or 8-byte type. It also has no concept of nullity, which makes it
 **incompatible with [null marking](signal-data.md#null-marking)**.
 
@@ -228,7 +235,7 @@ To store Numpress-linear-encoded arrays, an extra column
 `<array_name>_numpress_linear_bytes` is added alongside the
 `<array_name>_chunk_values` column. It is a list of byte arrays
 (`large_list<u8>` in Arrow parlance — **not** `large_binary`; see the
-[discussion of string-type "optimisation"](https://arrow.apache.org/docs/format/Intro.html#variable-length-binary-and-string)).
+[discussion of string-type "optimization"](https://arrow.apache.org/docs/format/Intro.html#variable-length-binary-and-string)).
 Its array-index entry **MUST** have `buffer_format` `chunk_transform` and the
 same array type, array name, data type, unit, and data-processing ID as the
 `_chunk_values` column. The `transform` field **MUST** be `MS:1002312`.
@@ -237,13 +244,27 @@ same array type, array name, data type, unit, and data-processing ID as the
     The start point is *included* in the chunk-values array — it is a specific
     component of the Numpress-encoded bytes.
 
+!!! warning
+    MS-Numpress linear encoding prevents Parquet encodings from helping to make
+    the data more compressible. Compare against the [delta chunk encoding](#delta-encoding) with [byte stream split](https://parquet.apache.org/docs/file-format/data-pages/encodings/#byte-stream-split-byte_stream_split--9) Parquet column encoding
+    before assuming Numpress will always be better.
+
 ### Grid encoding
 
 > Chunk-encoding CV term: [`MS:1003826` — coordinate grid encoding](http://purl.obolibrary.org/obo/MS_1003826)
 
 This uses a pluggable coordinate model that maps *real* value to and from unsigned integer coordinates using
 a pair of equations and a set of grid parameters. To store grid-encoded arrays for the chunk dimension, an
-extra column group `<array_name>_grid` is added. Like in the [Numpress linear encoding](#numpress-linear-encoding) case, the `<array_name>_chunk_values` column is populated with an empty list when the chunked dimension is grid-encoded. Other arrays may be grid encoded using the same methods described here, such as an IM-MS spectrum's ion mobility array, if desirable. Only one distinction is made in the encoding of the grid indices, seen later in this section. When a grid model is used, it is encoded as a group/struct with the schema:
+extra column group `<array_name>_grid` is added. Like in the [Numpress linear encoding](#numpress-linear-encoding)
+case, the `<array_name>_chunk_values` column is populated with an empty list when the chunked dimension is
+grid-encoded. The array index entry for `<array_name>_grid` column **MUST** have `buffer_format` `chunk_transform` and
+the same array type, array name, data type, unit, and data-processing ID as the `_chunk_values` column, and the
+`transform` field **MUST** be `MS:1003826`. The grid encoding is **incompatible with [null marking](signal-data.
+md#null-marking)** as to avoid the complication of stacking encodings. A parallel intensity array may still be null marked.
+Other arrays may be grid encoded using the same methods described here, such as an IM-MS spectrum's ion mobility array, if
+desirable. In this case the array index entry should either define the data type, unit and array type for the column,
+or copy from another column defining the same array type. Only one distinction is made in the encoding of the grid indices,
+seen later in this section. When a grid model is used, it is encoded as a group/struct with the schema:
 
 ```
 optional group <array_name>_grid {
@@ -271,20 +292,27 @@ vendor proprietary models. There are provisions for adding vendor models or appr
 vocabulary.
 
 The `parameters` column is a list of 64-bit floats that will be used to parameterize the grid model. The
-order they are written is given by `grid_type`'s definition. The number of parameters *MAY* vary within rows of the same `grid_type` if the model permits it, and is expected to vary between different `grid_type` models in general. These parameters are used in index/coordinate conversion.
+order they are written is given by `grid_type`'s definition. The number of parameters *MAY* vary within rows of the
+same `grid_type` if the model permits it, and is expected to vary between different `grid_type` models in general.
+These parameters are used in index/coordinate conversion.
 
 The `indices` column is a list of 32-bit (unsigned) integers that are mapped to the real 64-bit float coordinates
 being encoded. These are produced for writing by using the grid model to convert real-valued coordinates *to* grid
 indices. When reading, the grid model is used to convert *from* indices back to their equivalent real-valued
-coordinates. It is possible that for some proprietary grids, only the *from* index conversion is publicly available, or an approximation thereof. Whether the grid encodes the chunk dimension or not, the starting grid index **MUST** be included in the `indices` column's array. The chunk dimension's `indices` column **MUST** be delta-encoded, this is done to improve compressibility of a sorted array of indices.
+coordinates. It is possible that for some proprietary grids, only the *from* index conversion is publicly available,
+or an approximation thereof. Whether the grid encodes the chunk dimension or not, the starting grid index **MUST** be
+included in the `indices` column's array. The chunk dimension's `indices` column **MUST** be delta-encoded, this is
+done to improve compressibility of a sorted array of indices.
 
 It must be noted that *unless* using a vendor-defined encoding, this is likely to be a lossy transformation.
-The user **SHOULD** be able to set an error threshold for using the grid encodings. A model that would have errors exceeding the given threshold **SHOULD** fall back to use a different encoding. The linear grid can be
+The user **SHOULD** be able to set an error threshold for using the grid encodings. A model that would have errors
+exceeding the given threshold **SHOULD** fall back to use a different encoding. The linear grid can be
 an order of magnitude less accurate than `MS-Numpress linear prediction` on profile data, but 30% smaller when
 both are Zstandard compressed. On time-of-flight mass analyzers, the square root grid is marginally less accurate but
-produces better compression, 50% smaller than `MS-Numpress linear prediction` on the same profile data. This is because its
-grid indices are more consistently spaced relative to the real data. Additionally, on quantities with compressed dynamic
-ranges like ion mobility, the linear grid is equal to or more accurate than `MS-Numpress linear prediction` while still being smaller.
+often produces better compression, 50% smaller than `MS-Numpress linear prediction` on the same profile data. This is
+because its grid indices are more consistently spaced relative to the real data. Additionally, on quantities with
+compressed dynamic ranges like ion mobility, the linear grid is equal to or more accurate than `MS-Numpress linear
+prediction` while still being smaller.
 
 #### Parquet column encoding for grid encoding columns
 
@@ -363,7 +391,7 @@ TODO: Collect a larger corpus of data to plot this accuracy claim.
 
 ## Opaque array transforms for *other* dimensions
 
-Sometimes we prefer to store data in arrays other than the main axis lossily in non-uniform, unaligned, or otherwise
+Sometimes we prefer to store data in arrays other than the main axis loss-ily in non-uniform, unaligned, or otherwise
 non-standard types that have no physical representation in Parquet. MS-Numpress's
 short logged float (SLOF) and positive-integer encodings are good examples. While
 Numpress-linear handles the coordinate dimension, opaque transforms can also
@@ -379,8 +407,25 @@ the array index **MUST** be the *decoded* array's real type. Column names
 ??? question "Transform name or accession code?"
     We use a human readable name here, but it is not obviously stable. We could embed a CURIE in the column name like [MS_1002314](http://purl.obolibrary.org/obo/MS_1002314) instead for `intensity_MS_1002314_bytes`, but this is unnecessarily cryptic when the source of truth is the [array index](./signal-data.md#the-array-index)
 
+### Opaque transforms and the array index
 
-## Reading a single entry from the chunked encoding
+When *writing* a file with an opaque transform on a column, the writer **MUST** ensure
+that the necessary additional column to store the transformed value is present in the schema.
+If the writer expects the untransformed column to be present as well, this column **SHOULD**
+be present, and it **MUST** the `<array_name>_chunk_values` column must always be present in
+the schema. There **MUST** be an array index entry for each column. The transformed array index
+entry **MUST** set the appropriate CURIE in the `.transform` field, and the untransformed array
+entry is left `null`. Non-opaque transforms like null marking do not require this extra step.
+
+## Encoding Strategies Quick Reference
+
+![](../assets/img/chunk_encoding_processes.svg){: .panel-image }
+
+## Decoding Strategies Quick Reference
+
+![](../assets/img/chunk_decoding_processes.svg){: .panel-image }
+
+## Reading a single entry from the chunked layout
 
 To read a single entry (spectrum, chromatogram, …) stored in chunks:
 
@@ -393,12 +438,9 @@ To read a single entry (spectrum, chromatogram, …) stored in chunks:
    the pages that contain that index.
 2. Read the selected row group (or page row range) and filter to rows whose
    `<entity_type>_index` equals the entry's index.
-3. Optionally, sort the rows by their `chunk_start` value — usually ascending for
-   the quantity being measured.
-4. Process each selected row, decoding its `chunk_values` according to
-   `chunk_encoding` and any `transform` in the array index. Unpack the
-   `chunk_secondary` columns and apply any transforms, accumulating each column's
-   arrays across rows. Some transforms require additional information from the
-   entity's metadata table.
+3. Process each selected row, decoding its `chunk_values` according to
+   `chunk_encoding` and any `transform` in the array index.
+4. Unpack the `chunk_secondary` columns and apply any transforms, accumulating
+   each column's arrays across rows. Some transforms require additional information from the entity's metadata table.
 5. If the entry has additional [auxiliary arrays](auxiliary-arrays.md), read and
    decode them from the metadata table.

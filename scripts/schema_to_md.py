@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Translate a JSON Schema file to Markdown documentation."""
-import sys
-import json
 import argparse
+import json
 import re
-
-from urllib.request import urlopen
-from pathlib import Path
 from io import FileIO
+from pathlib import Path
+from urllib.request import urlopen
+
 
 def resolve_ref(ref: str, root: dict) -> dict:
     if not ref.startswith("#"):
@@ -23,7 +22,7 @@ def resolve_ref(ref: str, root: dict) -> dict:
 def ref_name(ref: str) -> str:
     if ref.startswith("http"):
         token = ref.rsplit('/', 1)[-1].replace(".json", '')
-        return f"/mzPeak-specification/archive/{token.lower()}", token
+        return f"{token.lower()}.md", token
     else:
         token = ref.rsplit("/", 1)[-1]
         return '#' + token, token
@@ -145,7 +144,7 @@ def schema_to_markdown(schema: dict) -> str:
     if desc := schema.get("description"):
         lines += [detect_link(desc), ""]
 
-    if meta := schema.get("$meta"):
+    if meta := schema.get("$meta"):  # noqa: SIM102
         if summary_uri := meta["summary"]:
             lines += [detect_link(urlopen(summary_uri).read().replace(b"\r", b"").decode('utf8')), ""]
 
@@ -193,6 +192,7 @@ def main():
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
         md = schema_to_markdown(schema)
         if outfh:
+            outfh.write(f"<!-- Automatically generated from {schema_path} ->\n\n")
             outfh.write(md)
             print(f"Written to {args.output}")
         else:

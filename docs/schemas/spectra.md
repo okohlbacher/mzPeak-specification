@@ -1,26 +1,22 @@
 # Spectra
 
 Spectra are described by up to three files: a **signal** file
-(`spectra_data.parquet`), an optional **peaks** file
-(`spectra_peaks.parquet`), and a **metadata** file
-(`spectra_metadata.parquet`).
+(`spectra_data.parquet`), an optional **peaks** file (`spectra_peaks.parquet`),
+and a set of **metadata** files described below.
 
-!!! abstract "Profile vs. centroid — where each goes"
-    By consensus at HUPO-PSI 2026, **profile** data goes in
-    `spectra_data.parquet` and **centroid** data goes in
-    `spectra_peaks.parquet`, *always*. When a file contains both for the same
-    spectrum, both files are present and the metadata row carries both
-    [`number_of_data_points (MS:1003060)`](http://purl.obolibrary.org/obo/MS_1003060)
-    and
-    [`number_of_peaks (MS:1003059)`](http://purl.obolibrary.org/obo/MS_1003059) so
-    a reader knows which file(s) to read. A reader exposes a mode flag
-    (profile / centroid) indicating which representation the caller wants.
+## Signal data disposition
 
-    For timsTOF-style data that is centroided in m/z but profiled in ion
-    mobility, the consensus is to treat it as centroid for the mass-spectrum
-    dimension and place it in `spectra_peaks.parquet`. The presence of the metadata column [`ion_mobility_frame_representation (MS:1003439)`](http://purl.obolibrary.org/obo/MS_1003439) **SHOULD** tell the reader if the ion mobility centroids have been pre-picked or not.
+When writing signal data, **profile** data goes in `spectra_data.parquet` and **centroid** data goes in
+`spectra_peaks.parquet`, *always*. When a file contains both for the same spectrum, both files are present.
+The `spectrum_metadata.parquet` row carries both a [`number_of_data_points (MS:1003060)`](http://purl.obolibrary.org/obo/MS_1003060)
+and a [`number_of_peaks (MS:1003059)`](http://purl.obolibrary.org/obo/MS_1003059) column so a reader knows which file(s) to
+read. Absence of either of these columns implies that that modality does not exist. A reader **SHOULD** allow the caller to
+indicating which representation the it wants.
 
-## Spectrum signal data — `spectra_data.parquet`
+For timsTOF-style data that is centroid in m/z but profiled in ion mobility, the consensus is to treat it as centroid
+for the mass-spectrum dimension and place it in `spectra_peaks.parquet`. The presence of the metadata column [`ion_mobility_frame_representation (MS:1003439)`](http://purl.obolibrary.org/obo/MS_1003439) **SHOULD** tell the reader if the ion mobility centroids have been pre-picked or not.
+
+## Spectrum signal data - `spectra_data.parquet`
 
 ```json
 {
@@ -43,7 +39,7 @@ carefully for profile data.
 
 !!! warning "Profile only"
     Only **profile** spectra are written here. Centroid spectra — including
-    centroided views of profile spectra when both modes are stored — **MUST**
+    centroid views of profile spectra when both modes are stored — **MUST**
     instead be written to [`spectra_peaks.parquet`](#spectrum-peak-data-spectra_peaksparquet).
     The number of points written here for a spectrum **MUST** be recorded in the
     [`number_of_data_points (MS:1003060)`](http://purl.obolibrary.org/obo/MS_1003060)
@@ -57,8 +53,11 @@ carefully for profile data.
 | `spectrum_time` | [byte stream split](https://parquet.apache.org/docs/file-format/data-pages/encodings/#byte-stream-split-byte_stream_split--9) |
 | m/z arrays | [byte stream split](https://parquet.apache.org/docs/file-format/data-pages/encodings/#byte-stream-split-byte_stream_split--9) (byte shuffling), or [RLE dictionary](https://parquet.apache.org/docs/file-format/data-pages/encodings/#dictionary-encoding-plain_dictionary--2-and-rle_dictionary--8) when there is ion-mobility data. |
 | ion-mobility arrays | [RLE dictionary](https://parquet.apache.org/docs/file-format/data-pages/encodings/#dictionary-encoding-plain_dictionary--2-and-rle_dictionary--8); byte shuffling tends not to help. Consider increasing the dictionary page size. |
+| intensity arrays | When stored as integers as some instruments do, [byte stream split](https://parquet.apache.org/docs/file-format/data-pages/encodings/#byte-stream-split-byte_stream_split--9) (byte shuffling) can efficiently reduce size, but shows limited benefit for floating point storage |
 
-## Spectrum peak data — `spectra_peaks.parquet`
+When grid encoding is used on any array, [byte stream split](https://parquet.apache.org/docs/file-format/data-pages/encodings/#byte-stream-split-byte_stream_split--9) on the grid indices is usually the best choice.
+
+## Spectrum peak data - `spectra_peaks.parquet`
 
 ```json
 {
@@ -77,7 +76,7 @@ recorded in the
 [`number_of_peaks (MS:1003059)`](http://purl.obolibrary.org/obo/MS_1003059) column
 of `spectra_metadata.parquet`, to support read planning.
 
-## Spectrum metadata — `spectra_metadata.parquet`
+## Spectrum metadata - `spectra_metadata.parquet`
 
 ```json
 {
@@ -87,7 +86,7 @@ of `spectra_metadata.parquet`, to support read planning.
 }
 ```
 
-This table uses the [metadata table](../layouts/metadata-tables.md) schema.
+This table uses the [metadata table](../layouts/metadata-tables.md) layout.
 
 - **`index`** (uint64) — the ascending 0-based index. **MUST** increment by 1 per
   entry and **SHOULD** be written in time-sorted ascending order. This is the
@@ -115,12 +114,11 @@ This table uses the [metadata table](../layouts/metadata-tables.md) schema.
 - **`auxiliary_arrays`** (list) — structures describing arrays that did not fit
   the [arrays-and-columns](../layouts/signal-data.md#arrays-and-columns)
   constraints. These may be large; load eagerly with care.
-- **`mz_delta_model`** (list of float64) — parameters of the m/z delta model used
-  to reconstruct [null-marked data](../layouts/signal-data.md#null-marking). There is
-  no fixed length requirement, and this value **MAY** be `null` or empty if no model
-  was learned. Polynomial coefficient terms **MUST** be written in descending power,
-  including any zeros.
-  :octicons-tasklist-16: Add CV term name (<http://purl.obolibrary.org/obo/MS_1003820>)
+- [**`polynomial_delta_coordinate_interpolation`**](http://purl.obolibrary.org/obo/MS_1003821) (list of float64) —
+  parameters of the m/z delta model used to reconstruct [null-marked data](../layouts/signal-data.md#null-marking).
+  There is no fixed length requirement, and this value **MAY** be `null` or empty if no model
+  was learned. Polynomial coefficient terms **MUST** be written in ascending power, including any
+  zeros.
 - [**`spectrum_representation (MS:1000525)`**](http://purl.obolibrary.org/obo/MS_1000525)
   (CURIE) — e.g.
   [`MS:1000128`](http://purl.obolibrary.org/obo/MS_1000128) "profile spectrum" or
@@ -150,7 +148,7 @@ This table uses the [metadata table](../layouts/metadata-tables.md) schema.
     - [`ion_mobility_frame_representation (MS:1003439)`](http://purl.obolibrary.org/obo/MS_1003439)
 - [`spectra_combination (MS:1000570)`](http://purl.obolibrary.org/obo/MS_1000570) (CURIE) — how multiple scans were combined to construct this spectrum. **MUST** be a child term of [`MS:1000570|spectra combination`](http://purl.obolibrary.org/obo/MS_1000570) such as [`MS:1000795|no combination`](http://purl.obolibrary.org/obo/MS_1000795) or [`MS:1000571|sum of spectra`](http://purl.obolibrary.org/obo/MS_1000571). If this column is absent, this value **SHOULD** be assumed to be [`MS:1000795|no combination`](http://purl.obolibrary.org/obo/MS_1000795).
 
-## Spectrum scan metadata — `spectra_metadata_scans.parquet`
+## Spectrum scan metadata - `spectra_metadata_scans.parquet`
 
 ```json
 {
@@ -160,7 +158,7 @@ This table uses the [metadata table](../layouts/metadata-tables.md) schema.
 }
 ```
 
-This table uses the [metadata table](../layouts/metadata-tables.md) schema.
+This table uses the [metadata table](../layouts/metadata-tables.md) layout.
 
 A scan or acquisition from the original raw file used to create a spectrum.
 
@@ -176,12 +174,14 @@ A scan or acquisition from the original raw file used to create a spectrum.
   source file in `file_description.source_files`. This might happen when summing and
   averaging spectra to improve signal quality (e.g. building a consensus spectrum), or
   when collating spectra across ion mobility measurements into an ion mobility frame.
+- [**`scan_start_time`**](http://purl.obolibrary.org/obo/MS_1000016) (float64) — The [scan start time](http://purl.obolibrary.org/obo/MS_1000016)
+  denotes the time that an analyzer started a scan, relative to the start of the run.
 - **`instrument_configuration_id`** (integer) — the `instrument_configuration`
   governing this scan referenced by `id`.
 - **`parameters`** (list) — controlled or uncontrolled parameters; see
   [the parameters list](../layouts/metadata-tables.md#the-parameters-list).
 - **`ion_mobility_value`** (float64) — optional ion-mobility measurement for this
-  scan. If multiple ion mobility values are used and combined on the instrument, such as with a FAIMS compensation voltage ramp, the writer **SHOULD** record multiple `scan` records per `spectrum` with the [ramp start](http://purl.obolibrary.org/obo/MS_1003450) and [ramp end](http://purl.obolibrary.org/obo/MS_1003451) values in this column, using the [`MS:1000571|sum of spectra`](http://purl.obolibrary.org/obo/MS_1000571) combinator. If multiple ion mobility values are separately acquired per frame, then an ion mobility dimension **MUST** instead be used in the [signal data](#spectrum-signal-data--spectra_dataparquet) and/or [peak data](#spectrum-peak-data--spectra_peaksparquet).
+  scan. If multiple ion mobility values are used and combined on the instrument, such as with a FAIMS compensation voltage ramp, the writer **SHOULD** record multiple `scan` records per `spectrum` with the [ramp start](http://purl.obolibrary.org/obo/MS_1003450) and [ramp end](http://purl.obolibrary.org/obo/MS_1003451) values in this column, using the [`MS:1000571|sum of spectra`](http://purl.obolibrary.org/obo/MS_1000571) combinator. If multiple ion mobility values are separately acquired per frame, then an ion mobility dimension **MUST** instead be used in the [signal data](#spectrum-signal-data-spectra_dataparquet) and/or [peak data](#spectrum-peak-data-spectra_peaksparquet).
 - **`ion_mobility_type`** (CURIE) — optional; a child of
   [`MS:1002892`](http://purl.obolibrary.org/obo/MS_1002892). See **`scan.ion_mobility_value`** for more details on ion mobility ramps.
 - **`scan_windows`** (list) — the list of windows in the main axis (m/z array usually) that were acquired in this scan. This **SHOULD** be an empty list if no window metadata was stored.
@@ -211,7 +211,7 @@ A scan or acquisition from the original raw file used to create a spectrum.
     - [`first_column_elution_time (MS:1002082)`](http://purl.obolibrary.org/obo/MS_1002082)
     - [`second_column_elution_time (MS:1002083)`](http://purl.obolibrary.org/obo/MS_1002083)
 
-## Spectrum precursor metadata — `spectra_metadata_precursors.parquet`
+## Spectrum precursor metadata - `spectra_metadata_precursors.parquet`
 
 ```json
 {
@@ -221,9 +221,14 @@ A scan or acquisition from the original raw file used to create a spectrum.
 }
 ```
 
-This table uses the [metadata table](../layouts/metadata-tables.md) schema.
+This table uses the [metadata table](../layouts/metadata-tables.md) layout.
 
-The method of precursor-ion selection and activation.
+The method of precursor-ion selection and activation. This table describes the spectrum its `source_index` references and *originates* from the
+spectrum its `precursor_index` references. When higher MS*n* is done, the writer **MUST** replicate the chain of selected ions from previous MS
+levels using the same `source_index` but each previous MS level's `precursor_index`. If file does not contain the precursor spectrum, the
+`precursor_index` **MUST** be `null`. Precursors **SHOULD** be stored in descending MS level order.
+
+![Selected ion to precursor linkage](../assets/img/precursor-linkage.svg)
 
 - **`source_index`** (uint64) — the spectrum index this precursor belongs to (foreign
   key).
@@ -256,7 +261,7 @@ The method of precursor-ion selection and activation.
     - **MUST** supply [`MS:1000044`](http://purl.obolibrary.org/obo/MS_1000044)
       (dissociation method) or a child, one or more times.
 
-## Spectrum selected ion metadata — `spectra_metadata_selected_ions.parquet`
+## Spectrum selected ion metadata - `spectra_metadata_selected_ions.parquet`
 
 ```json
 {
@@ -266,15 +271,18 @@ The method of precursor-ion selection and activation.
 }
 ```
 
-This table uses the [metadata table](../layouts/metadata-tables.md) schema.
+This table uses the [metadata table](../layouts/metadata-tables.md) layout.
 
-An ion isolated for dissociation.
+An ion isolated for dissociation. This table follows the same relationship as the [precursor table](#spectrum-precursor-metadata-spectra_metadata_precursorsparquet).
+In addition, there **MAY** be multiple selected ions from the same precursor selection with co-isolation. If this is
+the case, writers **SHOULD** write the `selected_ion_index` column to allow unique referencing to each selected ion.
 
 - **`source_index`** (uint64) — the spectrum this selected ion belongs to
   (foreign key).
 - **`precursor_index`** (uint64) — the spectrum the selected ion was created from
-  (foreign key).
-- **`ion_mobility_value`** (float64) / **`ion_mobility_type`** (CURIE) — See the [`scan.ion_mobility_value`](#scan-group) for details storing scalar values. If multiple ion mobility values are available for the selected ion that have been combined, but no ion mobility centroid is available as when a ramp has been used, report multiple `selected_ion` records, one for the ramp start and one for the ramp end.
+  (foreign key). This **MAY** be `null` when the precursor spectrum is not included in the written file.
+- **`selected_ion_index`** (uint64) — optional index value unique to this selected ion.
+- **`ion_mobility_value`** (float64) / **`ion_mobility_type`** (CURIE) — See the [`scan.ion_mobility_value`](#spectrum-scan-metadata-spectra_metadata_scansparquet) for details storing scalar values. If multiple ion mobility values are available for the selected ion that have been combined, but no ion mobility centroid is available as when a ramp has been used, report multiple `selected_ion` records, one for the ramp start and one for the ramp end.
 - **`parameters`** (list) — controlled or uncontrolled parameters; see [the parameters list](../layouts/metadata-tables.md#the-parameters-list).
 - **MUST** supply a child of
   [`MS:1000455`](http://purl.obolibrary.org/obo/MS_1000455){.cvparam} (ion selection
@@ -294,7 +302,7 @@ An ion isolated for dissociation.
 }
 ```
 
-This table uses the [metadata table](../layouts/metadata-tables.md) schema.
+This table uses the [metadata table](../layouts/metadata-tables.md) layout.
 
 When describing single reaction monitoring (SRM) or multiple reaction monitoring (MRM) experiments, each product ion is isolated separately
 with a different isolation window. This table is usually empty or absent
